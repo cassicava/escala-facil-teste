@@ -1,0 +1,100 @@
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+main.container {
+    display: grid;
+    position: relative;
+}
+
+.topbar {
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.topbar .container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.app-brand {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.tabs {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page, .page.active {
+    grid-area: 1 / 1;
+}
+
+.page {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(15px);
+  transition: opacity 0.2s ease-in, transform 0.2s ease-in, visibility 0.2s;
+}
+
+.page.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  transition-delay: 0.15s;
+}
+
+.home-grid-principal, .home-grid-secundario, .home-grid-terciario {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.home-grid-principal {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.home-grid-secundario {
+    grid-template-columns: 1fr 1fr;
+}
+
+.home-grid-terciario {
+    grid-template-columns: 1fr;
+}
+
+.welcome-container {
+    text-align: center;
+    margin: 24px auto 48px;
+    max-width: 700px;
+}
+
+.welcome-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--fg);
+    margin: 0 0 8px;
+}
+
+.welcome-subtitle {
+    font-size: 1.25rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0;
+}

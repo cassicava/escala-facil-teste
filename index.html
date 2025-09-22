@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gestor de Escalas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/01-main.css" />
+  <link rel="stylesheet" href="css/02-layout.css" />
+  <link rel="stylesheet" href="css/03-components.css" />
+  <link rel="stylesheet" href="css/04-logo.css" />
+  <link rel="stylesheet" href="css/05-dark-theme.css" />
+  <link rel="stylesheet" href="css/06-responsive.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container">
+      <a href="#" class="app-brand" onclick="go('home')">
+        <span class="animated-brand-text">Escala Fácil</span>
+      </a>
+      <nav class="tabs">
+        <button class="tab-btn" data-page="turnos">
+            <span class="tab-icon">🕒</span>
+            <span class="tab-text">Turnos</span>
+        </button>
+        <button class="tab-btn" data-page="cargos">
+            <span class="tab-icon">🏢</span>
+            <span class="tab-text">Cargos</span>
+        </button>
+        <button class="tab-btn" data-page="funcionarios">
+            <span class="tab-icon">👤</span>
+            <span class="tab-text">Funcionários</span>
+        </button>
+        <button class="tab-btn" data-page="gerar-escala">
+            <span class="tab-icon">📅</span>
+            <span class="tab-text">Gerar Escala</span>
+        </button>
+        <button class="tab-btn icon-only" data-page="configuracoes" title="Configurações">
+            <span class="tab-icon">⚙️</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="page-home" class="page active">
+      <div class="welcome-container">
+          <h2 id="welcomeTitle" class="welcome-title"></h2>
+          <p class="welcome-subtitle">Para gerar sua primeira escala com sucesso, siga os <strong>3 passos</strong> principais abaixo na sequência indicada.</p>
+      </div>
+      
+      <div class="home-grid-principal">
+        <a class="card home-card" data-goto="turnos"><span class="card-step">1</span><h3>🕒 Turnos</h3><p>Primeiro, crie os horários de trabalho, como 'Manhã' ou 'Noturno'.</p></a>
+        <a class="card home-card" data-goto="cargos"><span class="card-step">2</span><h3>🏢 Cargos</h3><p>Depois, crie os cargos e associe os turnos que cada um pode cumprir.</p></a>
+        <a class="card home-card" data-goto="funcionarios"><span class="card-step">3</span><h3>👤 Funcionários</h3><p>Por fim, adicione seus funcionários, definindo seus cargos e disponibilidade.</p></a>
+      </div>
+      <div class="home-grid-secundario">
+        <a class="card home-card" data-goto="gerar-escala"><h3>📅 Gerar Nova Escala</h3><p>Com tudo configurado, selecione um cargo e o período para gerar a escala.</p></a>
+        <a class="card home-card" data-goto="escalas-salvas"><h3>🗂️ Escalas Salvas</h3><p>Acesse e gerencie as escalas que você já salvou anteriormente.</p></a>
+      </div>
+      <div class="home-grid-terciario">
+        <a class="card home-card" data-goto="configuracoes"><h3>⚙️ Configurações</h3><p>Personalize a aparência e gerencie os dados da aplicação.</p></a>
+      </div>
+    </section>
+
+    <section id="page-turnos" class="page">
+        <h1>🕒 Turnos</h1>
+        <div class="card">
+          <h2>Criar / Editar</h2>
+          <div class="form-row"><label>Nome <input id="turnoNome" type="text" placeholder="Nome do turno (ex.: Manhã)" /></label></div>
+          <div class="form-row"><div id="turnoCorContainer"><label>Cor</label><div id="turnoCorPalette" class="color-palette"></div><input type="hidden" id="turnoCorHidden" value="#e2e8f0"></div></div>
+          <div class="form-row form-row-vcenter">
+              <label>Início <input id="turnoInicio" type="time" /></label>
+              <label>Fim <input id="turnoFim" type="time" /></label>
+              <label>Almoço (min) <input id="turnoAlmoco" type="number" min="0" step="5" placeholder="Opcional" /></label>
+              <span id="turnoCarga" class="muted badge">Carga: 00:00</span>
+              <div id="turnoViraDia" class="badge-explanation hidden">
+                <span>🌙</span>
+                <span>Turno Noturno</span>
+              </div>
+          </div>
+          
+          <div class="form-section form-section-3col">
+              <div class="form-section-main">
+                  <div class="form-section-header">
+                      <label>Descanso obrigatório?</label>
+                  </div>
+                  <div class="toggle-group" id="descansoToggleGroup">
+                      <button type="button" class="toggle-btn active" data-value="nao">Não</button>
+                      <button type="button" class="toggle-btn" data-value="sim">Sim</button>
+                      <input type="hidden" id="descansoObrigatorioHidden" value="nao">
+                  </div>
+              </div>
+              <div class="form-group" id="descansoHorasGroup">
+                  <label>Horas de Descanso</label>
+                  <input type="number" id="turnoDescansoHoras" min="1" placeholder="Ex: 36" disabled>
+              </div>
+              <div class="explanation-box">
+                  Define o intervalo mínimo em horas que um funcionário precisa descansar após concluir este turno, antes de poder iniciar qualquer outro.
+              </div>
+          </div>
+  
+          <div class="form-row">
+            <button id="btnSalvarTurno" class="primary">Salvar Turno</button>
+            <button id="btnCancelarEdTurno" class="secondary hidden">Cancelar Edição</button>
+            <button id="btnLimparTurno" class="secondary ml-auto">Limpar</button>
+          </div>
+        </div>
+        <div class="card card-lista">
+          <h2>Turnos Cadastrados</h2>
+          <div class="form-row"><input type="search" id="filtroTurnos" placeholder="🔎 Buscar turno..." style="width: 100%;"/></div>
+          <table class="table" id="tblTurnos">
+            <thead>
+              <tr><th>Cor</th><th>Nome</th><th>Início</th><th>Fim</th><th>Almoço</th><th>Carga</th><th>Descanso</th><th>Ações</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+  
+      <section id="page-cargos" class="page">
+          <h1>🏢 Cargos</h1>
+          <div class="card">
+            <h2>Criar / Editar Cargo</h2>
+            <div class="form-row"><label>Nome <input id="cargoNome" type="text" placeholder="Nome do cargo" /></label></div>
+            
+            <fieldset><legend>Turnos Associados</legend>
+                <div id="cargoTurnosContainer" class="check-container"></div>
+            </fieldset>
+
+            <fieldset id="cargoRegrasFieldset">
+                <legend>Regras de Funcionamento do Cargo</legend>
+                <div class="grid-2-col">
+                    <div class="form-section-column">
+                        <label class="form-label">Dias em que o cargo opera:</label>
+                        <div id="cargoDiasContainer" class="dias-semana-container"></div>
+                    </div>
+                    <div class="form-section-column">
+                        <label class="form-label">Horário de operação:</label>
+                        <div class="form-row-aligned">
+                           <div class="toggle-group" id="cargoHorarioToggle">
+                                <button type="button" class="toggle-btn active" data-value="parcial">Horário Definido</button>
+                                <button type="button" class="toggle-btn" data-value="24h">24 Horas</button>
+                                <input type="hidden" id="cargoIs24h" value="parcial">
+                            </div>
+                            <div id="cargoHorarioInputs" class="form-row">
+                                <label>Início <input id="cargoInicio" type="time" /></label>
+                                <label>Fim <input id="cargoFim" type="time" /></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="cargoRegrasExplicacao" class="explanation-box">
+                    Defina os dias e a faixa de horário em que este cargo precisa de cobertura. Isso ajudará o gerador de escala a entender a demanda.
+                </div>
+            </fieldset>
+
+            <div class="form-row">
+              <button id="btnSalvarCargo" class="primary">Salvar Cargo</button>
+              <button id="btnCancelarEdCargo" class="secondary hidden">Cancelar Edição</button>
+              <button id="btnLimparCargo" class="secondary ml-auto">Limpar</button>
+            </div>
+          </div>
+          <div class="card card-lista">
+            <h2>Cargos Cadastrados</h2>
+            <div class="form-row"><input type="search" id="filtroCargos" placeholder="🔎 Buscar cargo..." style="width: 100%;"/></div>
+            <table class="table" id="tblCargos">
+              <thead><tr><th>Nome</th><th>Turnos</th><th>Funcionamento</th><th>Ações</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+      </section>
+  
+      <section id="page-funcionarios" class="page">
+        <h1>👤 Funcionários</h1>
+        <div class="card">
+          <h2>Criar / Editar</h2>
+          
+          <div class="form-row">
+            <label class="form-field-half">Nome Completo <input id="funcNome" type="text" placeholder="Nome do funcionário" /></label>
+            <label>Documento <input id="funcDocumento" type="text" placeholder="Opcional (Ex: CRM 12345)" /></label>
+          </div>
+  
+          <div class="form-row">
+            <label class="form-field-half">Cargo<select id="funcCargo"><option value="">Selecione um cargo</option></select></label>
+          </div>
+  
+          <div class="form-section">
+            <div class="form-section-column">
+                <div class="form-section-header">
+                    <label>Tipo de Contrato</label>
+                </div>
+                <div class="toggle-group" id="contratoToggleGroup">
+                    <button type="button" class="toggle-btn active" data-value="clt">CLT / Concursado</button>
+                    <button type="button" class="toggle-btn" data-value="pj">Prestador de Serviço</button>
+                    <input type="hidden" id="funcContrato" value="clt">
+                </div>
+                <div id="contratoExplicacao" class="explanation-box">
+                    Funcionários <strong>CLT / Concursados</strong> seguirão rigorosamente as regras de descanso obrigatório cadastradas nos turnos.
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-section-header">
+                  <label>Período da Carga Horária</label>
+                </div>
+                <div class="toggle-group" id="periodoHorasToggleGroup">
+                    <button type="button" class="toggle-btn active" data-value="semanal">Semanal</button>
+                    <button type="button" class="toggle-btn" data-value="mensal">Mensal</button>
+                    <input type="hidden" id="funcPeriodoHoras" value="semanal">
+                </div>
+                <label style="margin-top: 12px;">Carga Horária (em horas)</label>
+                <input id="funcCargaHoraria" type="number" placeholder="Ex: 44" min="1"/>
+            </div>
+          </div>
+  
+          <fieldset id="funcTurnosFieldset">
+              <legend>Disponibilidade de Turnos</legend>
+              <div id="funcTurnosContainer" class="turno-disponibilidade-grid">
+                  <div class="turno-placeholder">
+                      <p>Selecione um cargo para ver os turnos disponíveis.</p>
+                  </div>
+              </div>
+          </fieldset>
+  
+          <div class="form-row">
+            <button id="btnSalvarFunc" class="primary">Salvar Funcionário</button>
+            <button id="btnCancelarEdFunc" class="secondary hidden">Cancelar Edição</button>
+            <button id="btnLimparFunc" class="secondary ml-auto">Limpar</button>
+          </div>
+        </div>
+        <div class="card card-lista">
+          <h2>Funcionários Cadastrados</h2>
+          <div class="form-row"><input type="search" id="filtroFuncionarios" placeholder="🔎 Buscar funcionário..." style="width: 100%;"/></div>
+          <table class="table" id="tblFuncionarios">
+              <thead><tr><th>Nome</th><th>Documento</th><th>Contrato</th><th>Carga Horária</th><th>Turnos</th><th>Ações</th></tr></thead>
+              <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+    <section id="page-gerar-escala" class="page">
+        <h1>📅 Gerar Nova Escala</h1>
+        <div class="card">
+          <h2>Nova Escala (Wizard)</h2>
+          <div id="wiz1" class="wizard-step active">
+            <h3>1) Selecione o Cargo</h3>
+            <select id="escCargo"></select>
+            <div class="form-row">
+              <button class="primary next" data-next="wiz2">Próximo</button>
+            </div>
+          </div>
+          <div id="wiz2" class="wizard-step">
+            <h3>2) Período</h3>
+            <div class="form-row">
+              <label>Início <input type="date" id="escIni" /></label>
+              <label>Fim <input type="date" id="escFim" /></label>
+            </div>
+            <div class="form-row">
+              <button class="secondary prev" data-prev="wiz1">Voltar</button>
+              <button class="primary next" data-next="wiz3">Próximo</button>
+            </div>
+          </div>
+          <div id="wiz3" class="wizard-step">
+            <h3>3) Folgas & Férias</h3>
+            <div id="folgasFeriasContainer" class="stack"></div>
+            <div class="form-row">
+              <button class="secondary prev" data-prev="wiz2">Voltar</button>
+              <button id="btnGerarEscala" class="primary">Gerar Escala</button>
+            </div>
+          </div>
+        </div>
+        <div id="escalaView" class="card hidden">
+          <div class="header-row">
+            <h2>Visualização da Escala</h2>
+            <div class="actions">
+              <button id="btnSalvarEscala" class="primary">Salvar</button>
+              <button id="btnCopiarEscala" class="secondary">Copiar +7 dias</button>
+              <button id="btnExcluirEscala" class="danger">Excluir</button>
+            </div>
+          </div>
+          <div id="escalaTabelaWrap"></div>
+          <div id="escalaResumo" class="muted"></div>
+        </div>
+    </section>
+    
+    <section id="page-escalas-salvas" class="page">
+        <h1>🗂️ Escalas Salvas</h1>
+        <div class="card">
+          <h2>Lista de Escalas</h2>
+          <ul id="listaEscalas" class="list"></ul>
+        </div>
+    </section>
+
+    <section id="page-configuracoes" class="page">
+        <h1>⚙️ Configurações</h1>
+        <div class="card">
+            <h2>Preferências</h2>
+            <div class="form-row">
+                <label>Seu Nome ou Nome da Empresa
+                    <input type="text" id="configNome" placeholder="Digite um nome para a saudação" />
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Aparência</label>
+                <div class="toggle-group" id="themeToggleGroup">
+                    <button type="button" class="toggle-btn" data-value="light">Claro</button>
+                    <button type="button" class="toggle-btn" data-value="dark">Escuro</button>
+                </div>
+            </div>
+            <div class="form-row">
+                <button id="btnSalvarConfig" class="primary">Salvar</button>
+            </div>
+        </div>
+        <div class="card card-lista">
+            <h2>Backup de Dados</h2>
+            <p class="muted">Aqui você poderá exportar todos os seus dados para um arquivo de backup ou importar dados de um arquivo salvo anteriormente.</p>
+        </div>
+    </section>
+
+  </main>
+
+  <footer class="container footer">
+    <small>HTML + CSS + JS • Dados persistem no navegador via <code>localStorage</code></small>
+  </footer>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div id="modal" class="modal">
+        <h3 id="modalTitle"></h3>
+        <p id="modalMessage"></p>
+        <div class="modal-actions">
+            <button id="modalCancel" class="secondary">Cancelar</button>
+            <button id="modalConfirm" class="primary">Confirmar</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden">
+    <p id="toastMessage"></p>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/turnos.js"></script>
+  <script src="js/cargos.js"></script>
+  <script src="js/funcionarios.js"></script>
+  <script src="js/escalas.js"></script>
+  <script src="js/configuracoes.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

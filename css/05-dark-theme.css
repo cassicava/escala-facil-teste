@@ -1,0 +1,65 @@
+html[data-theme="dark"] {
+  --bg: #121212;
+  --fg: #e1e1e1;
+  --muted: #a0a0a0;
+  --card: #1e1e1e;
+  --border: #424242;
+  --topbar-bg: #000000;
+  --shadow: 0 4px 18px rgba(0, 0, 0, .4);
+}
+
+html[data-theme="dark"] .tab-btn {
+    background-color: #333333;
+}
+
+html[data-theme="dark"] .tab-btn:hover {
+    background-color: #4f4f4f;
+}
+
+html[data-theme="dark"] .tab-btn.active {
+    background-color: var(--brand-2);
+    color: #e0eaff;
+}
+
+html[data-theme="dark"] input.invalid,
+html[data-theme="dark"] select.invalid {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] select:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+}
+
+html[data-theme="dark"] button {
+    background-color: #333333;
+    color: var(--fg);
+}
+
+html[data-theme="dark"] button.secondary {
+    background: #525252;
+    color: var(--fg);
+}
+
+html[data-theme="dark"] .table thead th {
+    background: #333333;
+}
+
+html[data-theme="dark"] .table .group-header.warning {
+    background-color: #4a420c;
+    color: #fef9c3;
+}
+
+html[data-theme="dark"] .check-inline:not(:has(input:checked)):hover {
+    background-color: #333333;
+}
+
+html[data-theme="dark"] .check-inline:has(input:checked) {
+  border-color: #60a5fa;
+  background-color: var(--brand-2);
+  color: var(--fg);
+}
+
+/* REMOVIDO: Todas as regras para .animated-brand-text no tema escuro foram retiradas daqui. */

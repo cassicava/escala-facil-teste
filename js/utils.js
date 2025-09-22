@@ -1,0 +1,67 @@
+/**************************************
+ * 🛠️ Utilidades / Persistência
+ **************************************/
+const KEYS = {
+  turnos: "ge_turnos",
+  cargos: "ge_cargos",
+  funcs: "ge_funcionarios",
+  escalas: "ge_escalas",
+  equipes: "ge_equipes", // NOVO
+  config: "ge_config"
+};
+
+const $ = (sel, el=document) => el.querySelector(sel);
+const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+const uid = () => Math.random().toString(36).slice(2,10);
+
+function saveJSON(key, data){ localStorage.setItem(key, JSON.stringify(data)); }
+function loadJSON(key, fallback){ 
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; } 
+  catch { return fallback; }
+}
+
+function parseTimeToMinutes(t){ if(!t) return 0; const [h,m]=t.split(":").map(Number); return h*60+m; }
+function minutesToHHMM(min){ const h=String(Math.floor(min/60)).padStart(2,"0"); const m=String(min%60).padStart(2,"0"); return `${h}:${m}`; }
+function calcCarga(inicio, fim, almocoMin) {
+  const inicioMin = parseTimeToMinutes(inicio);
+  const fimMin = parseTimeToMinutes(fim);
+  let duracaoMin = fimMin - inicioMin;
+  if (duracaoMin < 0) {
+    const minutosEmUmDia = 24 * 60;
+    duracaoMin = (minutosEmUmDia - inicioMin) + fimMin;
+  }
+  return duracaoMin - (almocoMin || 0);
+}
+function addDays(dateISO,n){ const d=new Date(dateISO); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function dateRangeInclusive(startISO,endISO){ const days=[]; let d=startISO; while(d<=endISO){ days.push(d); d=addDays(d,1); } return days; }
+
+function showToast(message) {
+    const toast = $("#toast");
+    $("#toastMessage").textContent = message;
+    toast.classList.remove("hidden");
+    setTimeout(() => {
+        toast.classList.add("hidden");
+    }, 3000);
+}
+
+// ATUALIZADO: Função agora aceita textos customizados para os botões
+function showConfirm({ title, message, confirmText = "Confirmar", cancelText = "Cancelar" }) {
+    return new Promise((resolve) => {
+        const backdrop = $("#modalBackdrop");
+        $("#modalTitle").textContent = title;
+        $("#modalMessage").textContent = message;
+        $("#modalConfirm").textContent = confirmText; // Texto do botão de confirmação
+        $("#modalCancel").textContent = cancelText;   // Texto do botão de cancelar
+        
+        backdrop.classList.remove("hidden");
+
+        $("#modalConfirm").onclick = () => {
+            backdrop.classList.add("hidden");
+            resolve(true);
+        };
+        $("#modalCancel").onclick = () => {
+            backdrop.classList.add("hidden");
+            resolve(false);
+        };
+    });
+}
