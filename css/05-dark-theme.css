@@ -8,17 +8,29 @@ html[data-theme="dark"] {
   --shadow: 0 4px 18px rgba(0, 0, 0, .4);
 }
 
-html[data-theme="dark"] .tab-btn {
-    background-color: #333333;
+/* FUNDO DA SIDEBAR PARA O TEMA ESCURO */
+html[data-theme="dark"] #sidebar {
+  background-color: rgba(30, 30, 30, 0.75);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-html[data-theme="dark"] .tab-btn:hover {
-    background-color: #4f4f4f;
+/* EFEITO DE VIDRO PARA CARDS E MODAIS NO TEMA ESCURO */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .modal {
+  background-color: rgba(30, 30, 30, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+html[data-theme="dark"] .home-card {
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-html[data-theme="dark"] .tab-btn.active {
+/* NOVA REGRA PARA O FUNDO DO FIELDSET NO PASSO 2 */
+html[data-theme="dark"] .regras-fieldset {
+    background-color: rgba(0,0,0,0.2);
+}
+
+html[data-theme="dark"] .tab-btn.active .tab-icon {
     background-color: var(--brand-2);
-    color: #e0eaff;
 }
 
 html[data-theme="dark"] input.invalid,
@@ -37,6 +49,11 @@ html[data-theme="dark"] button {
     background-color: #333333;
     color: var(--fg);
 }
+
+html[data-theme="dark"] .tab-btn {
+    background-color: transparent;
+}
+
 
 html[data-theme="dark"] button.secondary {
     background: #525252;
@@ -61,5 +78,3 @@ html[data-theme="dark"] .check-inline:has(input:checked) {
   background-color: var(--brand-2);
   color: var(--fg);
 }
-
-/* REMOVIDO: Todas as regras para .animated-brand-text no tema escuro foram retiradas daqui. */

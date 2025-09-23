@@ -1,7 +1,7 @@
 /**************************************
  * 🕒 Turnos
  **************************************/
-let TURNOS = loadJSON(KEYS.turnos, []);
+
 let editingTurnoId = null;
 let lastAddedTurnoId = null; // Para animar a nova linha
 
@@ -58,8 +58,8 @@ function validateInput(inputElement, forceValid = false) {
     }
 }
 
-$("#filtroTurnos").addEventListener("input", (e) => {
-    renderTurnos(e.target.value);
+$("#filtroTurnos").addEventListener("input", () => {
+    renderTurnos(); // A própria função de render agora pega o filtro
 });
 
 function renderCorPalette() {
@@ -102,11 +102,14 @@ function updateTurnoCargaPreview(){
 }
 ["turnoInicio","turnoFim","turnoAlmoco"].forEach(id=> $(`#${id}`).addEventListener("input",updateTurnoCargaPreview));
 
-function renderTurnos(filtro = ''){
+function renderTurnos(){
+  const { turnos } = store.getState();
+  const filtro = $("#filtroTurnos").value.toLowerCase();
+  
   const tbody=$("#tblTurnos tbody");
   tbody.innerHTML="";
-  const filtroLower = filtro.toLowerCase();
-  const turnosFiltrados = TURNOS.filter(t => t.nome.toLowerCase().includes(filtroLower));
+  
+  const turnosFiltrados = turnos.filter(t => t.nome.toLowerCase().includes(filtro));
   const turnosOrdenados = [...turnosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (turnosOrdenados.length === 0 && filtro.length === 0) {
@@ -183,19 +186,16 @@ async function saveTurnoFromForm() {
     return;
   }
 
-  const btn = $("#btnSalvarTurno");
+  const { turnos } = store.getState();
   const nome = $("#turnoNome").value.trim();
-  const cor = $("#turnoCorHidden").value;
-  const inicio = $("#turnoInicio").value;
-  const fim = $("#turnoFim").value;
-  const almocoMin = Number($("#turnoAlmoco").value || 0);
-  const descansoObrigatorio = descansoHiddenInput.value === 'sim';
-  const descansoObrigatorioHoras = descansoObrigatorio ? Number($("#turnoDescansoHoras").value || 0) : null;
-
-  if (TURNOS.some(t => t.nome.toLowerCase() === nome.toLowerCase() && t.id !== editingTurnoId)) {
+  
+  if (turnos.some(t => t.nome.toLowerCase() === nome.toLowerCase() && t.id !== editingTurnoId)) {
       return showToast("Já existe um turno com esse nome.");
   }
   
+  const inicio = $("#turnoInicio").value;
+  const fim = $("#turnoFim").value;
+
   if (fim < inicio) {
       const confirmado = await showConfirm({
           title: "Confirmar Turno Noturno?",
@@ -208,37 +208,33 @@ async function saveTurnoFromForm() {
       }
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Salvando...';
+  const almocoMin = Number($("#turnoAlmoco").value || 0);
+  const descansoObrigatorio = descansoHiddenInput.value === 'sim';
 
-  setTimeout(() => {
-    const dadosTurno = {
-        nome, cor, inicio, fim, almocoMin, descansoObrigatorioHoras,
-        cargaMin: calcCarga(inicio, fim, almocoMin)
-    };
+  const dadosTurno = {
+      id: editingTurnoId || uid(),
+      nome, 
+      cor: $("#turnoCorHidden").value, 
+      inicio, 
+      fim, 
+      almocoMin, 
+      descansoObrigatorioHoras: descansoObrigatorio ? Number($("#turnoDescansoHoras").value || 0) : null,
+      cargaMin: calcCarga(inicio, fim, almocoMin)
+  };
+  
+  if (!editingTurnoId) {
+      lastAddedTurnoId = dadosTurno.id;
+  }
 
-    if (editingTurnoId) {
-        const turno = TURNOS.find(t => t.id === editingTurnoId);
-        if (turno) Object.assign(turno, dadosTurno);
-    } else {
-        const novoTurno = { id: uid(), ...dadosTurno };
-        TURNOS.push(novoTurno);
-        lastAddedTurnoId = novoTurno.id;
-    }
-
-    saveJSON(KEYS.turnos, TURNOS);
-    renderTurnos();
-    renderTurnosSelects();
-    cancelEditTurno();
-    showToast("Turno salvo com sucesso!");
-
-    btn.disabled = false;
-    btn.textContent = 'Salvar Turno';
-  }, 200);
+  store.dispatch('SAVE_TURNO', dadosTurno);
+  
+  cancelEditTurno();
+  showToast("Turno salvo com sucesso!");
 }
 
 function editTurnoInForm(id) {
-  const turno = TURNOS.find(t => t.id === id);
+  const { turnos } = store.getState();
+  const turno = turnos.find(t => t.id === id);
   if (!turno) return;
 
   editingTurnoId = id;
@@ -293,24 +289,7 @@ async function deleteTurno(id) {
   });
 
   if (confirmado) {
-    TURNOS = TURNOS.filter(t => t.id !== id);
-    saveJSON(KEYS.turnos, TURNOS);
-    
-    CARGOS.forEach(cargo => {
-        cargo.turnosIds = cargo.turnosIds.filter(turnoId => turnoId !== id);
-    });
-    saveJSON(KEYS.cargos, CARGOS);
-    
-    FUNCS.forEach(func => {
-        if (func.disponibilidade && func.disponibilidade[id]) {
-            delete func.disponibilidade[id];
-        }
-    });
-    saveJSON(KEYS.funcs, FUNCS);
-
-    renderTurnos();
-    renderTurnosSelects();
-    renderCargos();
+    store.dispatch('DELETE_TURNO', id);
     showToast("Turno excluído com sucesso.");
   }
 }

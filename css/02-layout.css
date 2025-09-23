@@ -1,45 +1,118 @@
-.container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 16px;
+/* LARGURAS DA SIDEBAR - Variáveis para fácil manutenção */
+:root {
+  --sidebar-width-collapsed: 72px;
+  --sidebar-width-expanded: 220px;
 }
 
-main.container {
-    display: grid;
-    position: relative;
-}
-
-.topbar {
-  background: var(--topbar-bg);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.topbar .container {
+/* NOVO LAYOUT PRINCIPAL COM FLEXBOX */
+body {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-top: 8px;
-  padding-bottom: 8px;
+}
+
+#sidebar {
+  width: var(--sidebar-width-collapsed);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px; 
+  
+  /* --- EFEITO VIDRO LÍQUIDO (MAIS TRANSPARENTE) --- */
+  background-color: rgba(255, 255, 255, 0.75); 
+  -webkit-backdrop-filter: blur(10px); 
+  backdrop-filter: blur(10px); 
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  /* --- FIM DO EFEITO --- */
+
+  box-shadow: 0 4px 12px rgba(0,0,0,.05);
+  transition: width 0.3s ease-in-out;
+  z-index: 10;
+}
+
+#sidebar:hover {
+  width: var(--sidebar-width-expanded);
 }
 
 .app-brand {
   margin: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
+  font-weight: 700;
+  height: 42px;
+  padding-top: 8px;
+  padding-bottom: 24px;
+  position: relative;
 }
 
-.tabs {
-  margin-left: auto;
+/* --- LÓGICA DE ANIMAÇÃO DA LOGO REESCRITA E CORRIGIDA --- */
+.logo-compact, .logo-full {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
 }
 
+.logo-compact { 
+  font-size: 1.8rem; 
+  color: var(--brand);
+  opacity: 1;
+  /* Transição para QUANDO RECOLHE: Aparece suavemente */
+  transition: opacity 0.2s ease-in-out 0.1s;
+} 
+
+.logo-full { 
+  opacity: 0;
+  /* Transição para QUANDO RECOLHE: Some rápido */
+  transition: opacity 0.1s ease-in-out;
+}
+
+#sidebar:hover .logo-full { 
+  opacity: 1;
+  /* Transição para QUANDO EXPANDE: Aparece com atraso */
+  transition: opacity 0.2s ease-in-out 0.15s; 
+}
+
+#sidebar:hover .logo-compact { 
+  opacity: 0;
+  /* Transição para QUANDO EXPANDE: Some rápido */
+  transition: opacity 0.1s ease-in-out;
+}
+/* --- FIM DA LÓGICA DA LOGO --- */
+
+
+/* LÓGICA DE CENTRALIZAÇÃO DOS ÍCONES */
+.sidebar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1; 
+  justify-content: center; 
+}
+
+/* Posiciona o botão de configurações no final */
+#sidebar > .tab-btn[data-page="configuracoes"] {
+  margin-top: auto;
+}
+
+/* Conteúdo principal agora tem margem fixa para não ficar atrás da sidebar */
+main.container {
+  display: grid;
+  position: relative;
+  flex-grow: 1; 
+  margin-left: var(--sidebar-width-collapsed); 
+  max-width: 1600px;
+  padding: 24px;
+}
+
+/* --- LÓGICA DE TRANSIÇÃO DE PÁGINAS (sem alterações) --- */
 .page, .page.active {
     grid-area: 1 / 1;
 }
@@ -61,6 +134,7 @@ main.container {
   transition-delay: 0.15s;
 }
 
+/* --- GRIDS DA HOME (sem alterações) --- */
 .home-grid-principal, .home-grid-secundario, .home-grid-terciario {
     display: grid;
     gap: 16px;
@@ -79,6 +153,7 @@ main.container {
     grid-template-columns: 1fr;
 }
 
+/* --- TÍTULO DE BOAS-VINDAS (sem alterações) --- */
 .welcome-container {
     text-align: center;
     margin: 24px auto 48px;

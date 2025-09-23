@@ -1,29 +1,67 @@
-/* ATUALIZADO: Versão final e simplificada do logo, sem efeitos extras */
+/* --- ESTILO DO LOGO EXPANDIDO (AGORA ANIMADO) --- */
 .animated-brand-text {
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-weight: 700;
     line-height: 1;
     color: transparent;
 
-    /* Gradiente estático, igual para ambos os temas */
+    /* ALTERADO: Gradiente agora repete as cores para um loop perfeito */
     background: linear-gradient(
         to right, 
         #00BFFF, 
         #FF00FF, 
-        #FF0000
+        #FF0000,
+        #FF00FF,
+        #00BFFF
     );
+    /* ADICIONADO: Tamanho do fundo e aplicação da animação */
+    background-size: 300% 100%;
+    animation: animated-gradient-text 6s linear infinite;
+
     -webkit-background-clip: text;
     background-clip: text;
-
-    /* Garante que não haja borda, sombra ou animação */
     -webkit-text-stroke: 0;
     text-shadow: none;
-    animation: none;
 }
 
 
-/* --- ANIMAÇÕES GERAIS --- */
+/* --- ANIMAÇÃO PARA O LOGO COMPACTO 'EF' --- */
+.logo-compact {
+    /* 1. Cria um gradiente de fundo com as cores desejadas.
+       O gradiente é 3x maior que o texto e repete as cores para um loop suave. */
+    background: linear-gradient(
+        to right, 
+        #00BFFF, 
+        #FF00FF, 
+        #FF0000,
+        #FF00FF,
+        #00BFFF
+    );
+    background-size: 300% 100%;
 
+    /* 2. Faz o texto ficar transparente para que o fundo apareça através dele. */
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    /* 3. Aplica a animação que move o fundo. */
+    animation: animated-gradient-text 6s linear infinite; /* Duração aumentada */
+}
+
+/* Define o movimento do fundo do gradiente */
+@keyframes animated-gradient-text {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    /* Move o fundo em uma distância que faz o final ser igual ao começo */
+    background-position: 150% 50%; 
+  }
+}
+/* --- FIM DA NOVA ANIMAÇÃO --- */
+
+
+/* --- ANIMAÇÕES GERAIS --- */
 @keyframes fadeInRow {
   from {
     opacity: 0;

@@ -1,14 +1,16 @@
 /**************************************
  * 🛠️ Utilidades / Persistência
  **************************************/
-const KEYS = {
-  turnos: "ge_turnos",
-  cargos: "ge_cargos",
-  funcs: "ge_funcionarios",
-  escalas: "ge_escalas",
-  equipes: "ge_equipes", // NOVO
-  config: "ge_config"
-};
+
+const DIAS_SEMANA = [
+    { id: 'dom', nome: 'Domingo', abrev: 'D' }, 
+    { id: 'seg', nome: 'Segunda', abrev: 'S' },
+    { id: 'ter', nome: 'Terça', abrev: 'T' }, 
+    { id: 'qua', nome: 'Quarta', abrev: 'Q' },
+    { id: 'qui', nome: 'Quinta', abrev: 'Q' }, 
+    { id: 'sex', nome: 'Sexta', abrev: 'S' },
+    { id: 'sab', nome: 'Sábado', abrev: 'S' }
+];
 
 const $ = (sel, el=document) => el.querySelector(sel);
 const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
@@ -32,7 +34,7 @@ function calcCarga(inicio, fim, almocoMin) {
   }
   return duracaoMin - (almocoMin || 0);
 }
-function addDays(dateISO,n){ const d=new Date(dateISO); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function addDays(dateISO,n){ const d=new Date(dateISO); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
 function dateRangeInclusive(startISO,endISO){ const days=[]; let d=startISO; while(d<=endISO){ days.push(d); d=addDays(d,1); } return days; }
 
 function showToast(message) {
@@ -44,24 +46,34 @@ function showToast(message) {
     }, 3000);
 }
 
-// ATUALIZADO: Função agora aceita textos customizados para os botões
 function showConfirm({ title, message, confirmText = "Confirmar", cancelText = "Cancelar" }) {
     return new Promise((resolve) => {
         const backdrop = $("#modalBackdrop");
         $("#modalTitle").textContent = title;
         $("#modalMessage").textContent = message;
-        $("#modalConfirm").textContent = confirmText; // Texto do botão de confirmação
-        $("#modalCancel").textContent = cancelText;   // Texto do botão de cancelar
+        $("#modalConfirm").textContent = confirmText;
+        $("#modalCancel").textContent = cancelText;
         
         backdrop.classList.remove("hidden");
 
-        $("#modalConfirm").onclick = () => {
+        const confirmHandler = () => {
             backdrop.classList.add("hidden");
             resolve(true);
+            cleanup();
         };
-        $("#modalCancel").onclick = () => {
+
+        const cancelHandler = () => {
             backdrop.classList.add("hidden");
             resolve(false);
+            cleanup();
         };
+
+        const cleanup = () => {
+            $("#modalConfirm").removeEventListener('click', confirmHandler);
+            $("#modalCancel").removeEventListener('click', cancelHandler);
+        };
+
+        $("#modalConfirm").addEventListener('click', confirmHandler);
+        $("#modalCancel").addEventListener('click', cancelHandler);
     });
 }

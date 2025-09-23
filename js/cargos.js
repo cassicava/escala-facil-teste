@@ -1,16 +1,9 @@
 /**************************************
  * 🏢 Cargos
  **************************************/
-let CARGOS = loadJSON(KEYS.cargos, []);
+
 let editingCargoId = null;
 let lastAddedCargoId = null;
-
-const DIAS_SEMANA_CARGO = [
-    { id: 'dom', nome: 'Domingo', abrev: 'D' }, { id: 'seg', nome: 'Segunda', abrev: 'S' },
-    { id: 'ter', nome: 'Terça', abrev: 'T' }, { id: 'qua', nome: 'Quarta', abrev: 'Q' },
-    { id: 'qui', nome: 'Quinta', abrev: 'Q' }, { id: 'sex', nome: 'Sexta', abrev: 'S' },
-    { id: 'sab', nome: 'Sábado', abrev: 'S' }
-];
 
 // --- LÓGICA DO FORMULÁRIO ---
 
@@ -22,15 +15,16 @@ $("#cargoNome").addEventListener("input", (e) => {
   validateInput(input, input.value.trim() !== '');
 });
 
-$("#filtroCargos").addEventListener("input", (e) => {
-    renderCargos(e.target.value);
+$("#filtroCargos").addEventListener("input", () => {
+    renderCargos();
 });
 
 function renderTurnosSelects(){
+  const { turnos } = store.getState();
   const container = $("#cargoTurnosContainer");
-  $$("#cargoTurnosContainer > *:not(legend)").forEach(el => el.remove());
+  container.innerHTML = '';
 
-  if (TURNOS.length === 0) {
+  if (turnos.length === 0) {
     const p = document.createElement('p');
     p.className = 'muted';
     p.innerHTML = `Nenhum turno cadastrado. <a href="#" onclick="go('turnos')">Cadastre um turno primeiro</a>.`;
@@ -38,7 +32,7 @@ function renderTurnosSelects(){
     return;
   }
   
-  const turnosOrdenados = [...TURNOS].sort((a, b) => a.nome.localeCompare(b.nome));
+  const turnosOrdenados = [...turnos].sort((a, b) => a.nome.localeCompare(b.nome));
 
   turnosOrdenados.forEach(t => {
     const lbl = document.createElement("label");
@@ -55,7 +49,7 @@ function renderTurnosSelects(){
 function renderDiasSemanaCargo() {
     const container = $("#cargoDiasContainer");
     container.innerHTML = '';
-    DIAS_SEMANA_CARGO.forEach(d => {
+    DIAS_SEMANA.forEach(d => {
         const lbl = document.createElement("label");
         lbl.className = "dia-label";
         lbl.title = d.nome;
@@ -80,7 +74,7 @@ $$('#cargoHorarioToggle .toggle-btn').forEach(button => {
 });
 
 function updateCargoRegrasExplicacao() {
-    const dias = $$('input[name="cargoDias"]:checked').map(chk => DIAS_SEMANA_CARGO.find(d => d.id === chk.value)?.nome || '');
+    const dias = $$('input[name="cargoDias"]:checked').map(chk => DIAS_SEMANA.find(d => d.id === chk.value)?.nome || '');
     const is24h = $("#cargoIs24h").value === '24h';
     const inicio = $("#cargoInicio").value;
     const fim = $("#cargoFim").value;
@@ -98,11 +92,14 @@ function updateCargoRegrasExplicacao() {
 
 // --- RENDERIZAÇÃO DA TABELA ---
 
-function renderCargos(filtro = ''){
+function renderCargos(){
+  const { cargos, funcionarios, turnos } = store.getState();
+  const filtro = $("#filtroCargos").value.toLowerCase();
+  
   const tbody = $("#tblCargos tbody");
   tbody.innerHTML = "";
-  const filtroLower = filtro.toLowerCase();
-  const cargosFiltrados = CARGOS.filter(c => c.nome.toLowerCase().includes(filtroLower));
+  
+  const cargosFiltrados = cargos.filter(c => c.nome.toLowerCase().includes(filtro));
   const cargosOrdenados = [...cargosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (cargosOrdenados.length === 0 && filtro.length === 0) {
@@ -114,15 +111,15 @@ function renderCargos(filtro = ''){
     return;
   }
 
-  const turnosMap = Object.fromEntries(TURNOS.map(t => [t.id, t]));
+  const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
 
   cargosOrdenados.forEach(c => {
-    const numFuncionarios = FUNCS.filter(f => f.cargoId === c.id).length;
+    const numFuncionarios = funcionarios.filter(f => f.cargoId === c.id).length;
     const nomesTurnos = (c.turnosIds || []).map(id => turnosMap[id]?.nome || "—").join(", ");
     
     let funcionamento = 'Não definido';
     if (c.regras && c.regras.dias.length > 0) {
-        const dias = c.regras.dias.map(d => DIAS_SEMANA_CARGO.find(dia => dia.id === d)?.abrev).join(', ');
+        const dias = c.regras.dias.map(d => DIAS_SEMANA.find(dia => dia.id === d)?.abrev).join(', ');
         const horario = c.regras.is24h ? '24h' : `${c.regras.inicio}-${c.regras.fim}`;
         funcionamento = `${dias} (${horario})`;
     }
@@ -161,7 +158,8 @@ function saveCargoFromForm() {
     return;
   }
   
-  if (CARGOS.some(c => c.nome.toLowerCase() === nome.toLowerCase() && c.id !== editingCargoId)) {
+  const { cargos } = store.getState();
+  if (cargos.some(c => c.nome.toLowerCase() === nome.toLowerCase() && c.id !== editingCargoId)) {
       return showToast("Já existe um cargo com este nome.");
   }
   
@@ -176,38 +174,20 @@ function saveCargoFromForm() {
           fim: $("#cargoFim").value,
       }
   };
-
-  if (editingCargoId) {
-      const index = CARGOS.findIndex(c => c.id === editingCargoId);
-      if (index > -1) {
-          CARGOS[index] = cargoData;
-          FUNCS.forEach(func => {
-              if (func.cargoId === editingCargoId) {
-                  for (const turnoId in func.disponibilidade) {
-                      if (!turnosIds.includes(turnoId)) {
-                          delete func.disponibilidade[turnoId];
-                      }
-                  }
-              }
-          });
-          saveJSON(KEYS.funcs, FUNCS);
-      }
-  } else {
-      CARGOS.push(cargoData);
-      lastAddedCargoId = cargoData.id;
+  
+  if (!editingCargoId) {
+    lastAddedCargoId = cargoData.id;
   }
 
-  saveJSON(KEYS.cargos, CARGOS);
-  renderCargos();
-  renderFuncs();
-  renderFuncCargoSelect();
-  renderEscCargoSelect();
+  store.dispatch('SAVE_CARGO', cargoData);
+  
   cancelEditCargo();
   showToast("Cargo salvo com sucesso!");
 }
 
 function editCargoInForm(id) {
-  const cargo = CARGOS.find(c => c.id === id);
+  const { cargos } = store.getState();
+  const cargo = cargos.find(c => c.id === id);
   if (!cargo) return;
 
   cancelEditCargo();
@@ -253,16 +233,7 @@ async function deleteCargo(id) {
   });
 
   if (confirmado) {
-    CARGOS = CARGOS.filter(c => c.id !== id);
-    saveJSON(KEYS.cargos, CARGOS);
-    
-    FUNCS.forEach(f => { if (f.cargoId === id) f.cargoId = null; });
-    saveJSON(KEYS.funcs, FUNCS);
-
-    renderCargos();
-    renderFuncs();
-    renderFuncCargoSelect();
-    renderEscCargoSelect();
+    store.dispatch('DELETE_CARGO', id);
     showToast("Cargo excluído com sucesso.");
   }
 }
