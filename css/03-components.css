@@ -588,19 +588,18 @@ html[data-theme="dark"] .tab-btn:hover {
     justify-content: center;
     align-items: center;
     z-index: 100;
-    opacity: 1;
+    
+    /* EFEITO DE VIDRO NO MODAL */
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
 }
 .modal-backdrop.hidden {
     opacity: 0;
     pointer-events: none;
 }
 .modal {
-  /* EFEITO DE VIDRO MAIS TRANSPARENTE */
-  background-color: rgba(255, 255, 255, 0.75);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  
+  /* O MODAL FICA SÓ COM O BACKGROUND-COLOR NORMAL, O EFEITO DE VIDRO ESTÁ NO BACKDROP */
+  background-color: var(--card);
   padding: 24px;
   border-radius: var(--radius);
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -701,4 +700,22 @@ html[data-theme="dark"] .tab-btn:hover {
     padding: 4px;
     font-size: 0.9rem;
     min-width: 100px;
+}
+
+/* Novo estilo para o resumo de dias no passo 1 */
+.dias-resumo-box {
+    display: inline-block;
+    padding: 8px 16px;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background-color: var(--card);
+    font-weight: 500;
+    color: var(--fg);
+    transition: all 0.3s ease-in-out;
+}
+
+.dias-resumo-placeholder {
+    font-style: italic;
+    color: var(--muted);
 }

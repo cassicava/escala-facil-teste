@@ -15,9 +15,13 @@ html[data-theme="dark"] #sidebar {
 }
 
 /* EFEITO DE VIDRO PARA CARDS E MODAIS NO TEMA ESCURO */
-html[data-theme="dark"] .card,
-html[data-theme="dark"] .modal {
+html[data-theme="dark"] .card {
   background-color: rgba(30, 30, 30, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+html[data-theme="dark"] .modal {
+  /* O MODAL FICA SÓ COM O BACKGROUND-COLOR NORMAL, O EFEITO DE VIDRO ESTÁ NO BACKDROP */
+  background-color: var(--card);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 html[data-theme="dark"] .home-card {

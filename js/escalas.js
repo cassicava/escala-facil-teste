@@ -5,7 +5,8 @@ let currentEscala = null;
 let geradorState = { 
     excecoes: {},
     feriados: [],
-    maxDiasConsecutivos: 6
+    maxDiasConsecutivos: 6,
+    minFolgasFimSemana: 2
 };
 
 const TIPOS_FOLGA = [
@@ -18,7 +19,7 @@ const TIPOS_FOLGA = [
 // --- RENDERIZAÇÃO E LÓGICA DO ASSISTENTE (WIZARD) ---
 
 function resetGeradorEscala() {
-    geradorState = { excecoes: {}, feriados: [], maxDiasConsecutivos: 6 };
+    geradorState = { excecoes: {}, feriados: [], maxDiasConsecutivos: 6, minFolgasFimSemana: 2 };
     currentEscala = null;
     $("#escalaView").classList.add('hidden');
     $("#gerador-container").classList.remove('hidden');
@@ -28,10 +29,11 @@ function resetGeradorEscala() {
     $("#escIni").value = '';
     $("#escFim").value = '';
     $('#escFim').disabled = true;
-    $("#escResumoDias").textContent = '';
+    updateEscalaResumoDias(); // Garante que o texto padrão seja exibido
     $$('#passo1-selecao .invalid').forEach(el => el.classList.remove('invalid'));
     $("#cobertura-turnos-container").innerHTML = '';
     $("#excecoes-funcionarios-container").innerHTML = '';
+    $("#minFolgasFimSemana").value = 2; // Reseta o valor do campo
     renderFeriadosTags();
 }
 
@@ -43,6 +45,11 @@ function navigateWizard(targetStep) {
 function setupWizard() {
     const escIniInput = $("#escIni");
     const escFimInput = $("#escFim");
+    
+    // Adiciona evento de clique para abrir o calendário
+    escIniInput.onclick = () => escIniInput.showPicker();
+    escFimInput.onclick = () => escFimInput.showPicker();
+    $('#feriado-data-input').onclick = () => $('#feriado-data-input').showPicker();
 
     $("#btn-goto-passo2").onclick = () => {
         const cargoId = $("#escCargo").value;
@@ -67,7 +74,7 @@ function setupWizard() {
         $('#feriado-data-input').min = inicio;
         $('#feriado-data-input').max = fim;
 
-        renderPasso2_Cobertura(cargoId);
+        renderPasso2_Regras(cargoId);
         navigateWizard('passo2-cobertura');
     };
 
@@ -91,6 +98,7 @@ function setupWizard() {
         }
 
         geradorState.maxDiasConsecutivos = parseInt($('#maxDiasConsecutivos').value, 10) || 6;
+        geradorState.minFolgasFimSemana = parseInt($('#minFolgasFimSemana').value, 10) || 2;
         renderPasso3_Excecoes(geradorState.cargoId);
         navigateWizard('passo3-excecoes');
     };
@@ -124,12 +132,25 @@ function setupWizard() {
     };
 
     $('#btn-add-feriado').onclick = addFeriado;
+    
     $$('#feriado-trabalha-toggle .toggle-btn').forEach(button => {
         button.onclick = () => {
             $$('#feriado-trabalha-toggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
         };
     });
+    
+    const feriadoDescontarToggle = $('#feriado-descontar-toggle');
+    const feriadoHorasDescontoContainer = $('#feriado-horas-desconto-container');
+    $$('.toggle-btn', feriadoDescontarToggle).forEach(button => {
+        button.onclick = () => {
+            $$('.toggle-btn', feriadoDescontarToggle).forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            const show = button.dataset.value === 'sim';
+            feriadoHorasDescontoContainer.style.display = show ? 'flex' : 'none';
+        };
+    });
+
     $$('#cobertura-manual-toggle .toggle-btn').forEach(button => {
         button.onclick = () => {
             $$('#cobertura-manual-toggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
@@ -144,15 +165,16 @@ function updateEscalaResumoDias() {
     const inicio = $("#escIni").value;
     const fim = $("#escFim").value;
     const resumoEl = $("#escResumoDias");
+
     if (inicio && fim && fim >= inicio) {
         const dias = dateRangeInclusive(inicio, fim).length;
         resumoEl.textContent = `Total: ${dias} dia(s)`;
     } else {
-        resumoEl.textContent = '';
+        resumoEl.textContent = 'Selecione o período para ver a duração da escala.';
     }
 }
 
-function renderPasso2_Cobertura(cargoId) {
+function renderPasso2_Regras(cargoId) {
     const { cargos, turnos } = store.getState();
     const cargo = cargos.find(c => c.id === cargoId);
     const container = $("#cobertura-turnos-container");
@@ -178,6 +200,9 @@ function addFeriado() {
     const dataInput = $('#feriado-data-input');
     const nomeInput = $('#feriado-nome-input');
     const trabalha = $('#feriado-trabalha-toggle .toggle-btn.active').dataset.value === 'sim';
+    const descontaHoras = $('#feriado-descontar-toggle .toggle-btn.active').dataset.value === 'sim';
+    const horasDescontoInput = $('#feriado-horas-desconto');
+    let horasDesconto = 0;
 
     const date = dataInput.value;
     const nome = nomeInput.value.trim();
@@ -186,16 +211,29 @@ function addFeriado() {
         showToast("Por favor, preencha a data e o nome do feriado.");
         return;
     }
+    
+    if (descontaHoras) {
+        horasDesconto = parseInt(horasDescontoInput.value, 10);
+        if (isNaN(horasDesconto) || horasDesconto < 0) {
+            showToast("Por favor, informe uma quantidade válida de horas para descontar.");
+            horasDescontoInput.classList.add('invalid');
+            return;
+        }
+    }
+    horasDescontoInput.classList.remove('invalid');
+
     if (geradorState.feriados.some(f => f.date === date)) {
         showToast("Já existe um feriado nesta data.");
         return;
     }
 
-    geradorState.feriados.push({ date, nome, trabalha });
+    geradorState.feriados.push({ date, nome, trabalha, descontaHoras, horasDesconto });
     geradorState.feriados.sort((a, b) => a.date.localeCompare(b.date));
     renderFeriadosTags();
     dataInput.value = '';
     nomeInput.value = '';
+    $('#feriado-descontar-toggle .toggle-btn[data-value="nao"]').click(); // Reseta o toggle
+    $('#feriado-horas-desconto').value = '';
 }
 
 function removeFeriado(date) {
@@ -207,7 +245,8 @@ function renderFeriadosTags() {
     const container = $('#feriados-tags-container');
     container.innerHTML = geradorState.feriados.map(f => {
         const trabalhaText = f.trabalha ? '' : ' (Não trabalha)';
-        return `<span class="tag">${new Date(f.date+'T12:00:00').toLocaleDateString()} - ${f.nome}${trabalhaText}<button data-remove-feriado="${f.date}">x</button></span>`
+        const descontoText = f.descontaHoras ? ` (-${f.horasDesconto}h)` : '';
+        return `<span class="tag">${new Date(f.date+'T12:00:00').toLocaleDateString()} - ${f.nome}${trabalhaText}${descontoText}<button data-remove-feriado="${f.date}">x</button></span>`
     }).join('');
     $$('[data-remove-feriado]').forEach(btn => {
         btn.onclick = () => removeFeriado(btn.dataset.removeFeriado);
@@ -300,7 +339,7 @@ function handleExcecaoToggle(event, funcId) {
         const fimInput = $(`[data-date-fim="${tipo}"][data-func-id="${funcId}"]`);
         iniInput.value = '';
         fimInput.value = '';
-        if($(`[data-motivo="${tipo}"][data-func-id="${funcId}"]`)) {
+        if($(`[data-motivo="${tipo}"][data-func-id="${func.id}"]`)) {
             $(`[data-motivo="${tipo}"][data-func-id="${funcId}"]`).value = '';
         }
         // Dispara o evento onchange para limpar o estado
@@ -399,7 +438,7 @@ function addFolga(funcId) {
 }
 
 function removeFolga(funcId, date) {
-    geradorState.excecoes[funcId].folgas = geradorState.excecoes[funcId].folgas.filter(f => f.date !== date);
+    geradorState.excecoes[funcId].folgas = geradorState.excecoes[func.id].folgas.filter(f => f.date !== date);
     renderFolgas(funcId);
 }
 
@@ -419,7 +458,7 @@ function renderFolgas(funcId) {
 
 function gerarEscala() {
     const { cargos, funcionarios, turnos } = store.getState();
-    const { cargoId, inicio, fim, cobertura, excecoes, maxDiasConsecutivos, feriados } = geradorState;
+    const { cargoId, inicio, fim, cobertura, excecoes, maxDiasConsecutivos, minFolgasFimSemana, feriados } = geradorState;
     const cargo = cargos.find(c => c.id === cargoId);
     const funcs = funcionarios.filter(f => f.cargoId === cargoId);
     const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
@@ -437,14 +476,20 @@ function gerarEscala() {
     });
 
     let historico = {};
+    let finsDeSemanaTrabalhados = {};
     funcs.forEach(f => {
         historico[f.id] = { horasTrabalhadas: 0, ultimoTurnoFim: null, diasTrabalhados: 0 };
+        finsDeSemanaTrabalhados[f.id] = new Set();
     });
 
     const dateRange = dateRangeInclusive(inicio, fim);
+    const totalMeses = new Set(dateRange.map(d => d.substring(0, 7))).size;
+    const diasFimDeSemana = ['dom', 'sab'];
+    
     let slots = [];
     dateRange.forEach(date => {
-        const diaSemanaId = DIAS_SEMANA[new Date(date + 'T12:00:00').getUTCDay()].id;
+        const diaSemana = new Date(date + 'T12:00:00');
+        const diaSemanaId = DIAS_SEMANA[diaSemana.getUTCDay()].id;
         const feriado = feriados.find(f => f.date === date);
 
         if (feriado && !feriado.trabalha) {
@@ -474,6 +519,34 @@ function gerarEscala() {
         }
         return diasSeguidos < max;
     }
+    
+    function checkFimDeSemana(funcId, date, minFolgasFimSemana) {
+        const d = new Date(date + 'T12:00:00');
+        const diaSemanaId = DIAS_SEMANA[d.getUTCDay()].id;
+        if (diaSemanaId !== 'sab' && diaSemanaId !== 'dom') return true;
+        
+        const semanaId = getWeekNumber(d);
+        const mesAno = d.toISOString().substring(0, 7);
+        const fimDeSemanaId = `${mesAno}-${semanaId}`;
+        
+        // Verifica se o funcionário já trabalhou neste fim de semana
+        if (finsDeSemanaTrabalhados[funcId].has(fimDeSemanaId)) {
+            return false;
+        }
+
+        // Conta quantos fins de semana o funcionário já trabalhou no mês
+        const fdsTrabalhadosNoMes = [...finsDeSemanaTrabalhados[funcId]].filter(id => id.startsWith(mesAno)).length;
+        
+        // Se a folga restante for menor que o mínimo, não pode escalar
+        const finsDeSemanaNoMes = getFimDeSemanaNoMes(mesAno).length;
+        const folgasRestantes = finsDeSemanaNoMes - fdsTrabalhadosNoMes - 1; // -1 para o FDS atual
+        
+        if (folgasRestantes < minFolgasFimSemana) {
+            return false;
+        }
+        
+        return true;
+    }
 
     function tentarPreencher(slotsParaTentar, usarHoraExtra = false) {
         slotsParaTentar.forEach(slot => {
@@ -498,6 +571,9 @@ function gerarEscala() {
                         const maxHoras = f.periodoHoras === 'semanal' ? f.cargaHoraria * (dateRange.length / 7) : f.cargaHoraria;
                         if ((historico[f.id].horasTrabalhadas / 60) >= maxHoras) return false;
                     }
+                    if (!checkFimDeSemana(f.id, slot.date, minFolgasFimSemana)) {
+                        return false;
+                    }
                     return true;
                 })
                 .sort((a, b) => historico[a.id].horasTrabalhadas - historico[b.id].horasTrabalhadas);
@@ -510,6 +586,13 @@ function gerarEscala() {
                 let dataFimTurno = new Date(`${slot.date}T${turno.fim}`);
                 if (turno.fim < turno.inicio) dataFimTurno.setUTCDate(dataFimTurno.getUTCDate() + 1);
                 historico[escolhido.id].ultimoTurnoFim = { data: dataFimTurno, turnoId: turno.id };
+                
+                const diaSemana = new Date(slot.date + 'T12:00:00');
+                if (diasFimDeSemana.includes(DIAS_SEMANA[diaSemana.getUTCDay()].id)) {
+                    const semanaId = getWeekNumber(diaSemana);
+                    const mesAno = diaSemana.toISOString().substring(0, 7);
+                    finsDeSemanaTrabalhados[escolhido.id].add(`${mesAno}-${semanaId}`);
+                }
             }
         });
     }
@@ -520,6 +603,16 @@ function gerarEscala() {
     tentarPreencher(slots, false);
     tentarPreencher(slots.filter(s => !s.assigned), true);
     
+    // Aplica o desconto de horas dos feriados
+    feriados.filter(f => f.descontaHoras).forEach(feriado => {
+        const funcsNaoTrabalharamNoFeriado = funcs.filter(f => !slots.some(s => s.date === feriado.date && s.assigned === f.id));
+        funcsNaoTrabalharamNoFeriado.forEach(f => {
+            if (historico[f.id]) {
+                historico[f.id].horasTrabalhadas -= (feriado.horasDesconto * 60);
+            }
+        });
+    });
+
     const cargoNome = cargos.find(c => c.id === cargoId)?.nome || 'Cargo';
     const nomeEscala = `Escala: ${cargoNome} (${new Date(inicio+'T12:00:00').toLocaleDateString()} a ${new Date(fim+'T12:00:00').toLocaleDateString()})`;
 
@@ -535,7 +628,7 @@ function renderResumoDetalhado(escala) {
         return;
     }
 
-    const funcsDaEscala = funcionarios.filter(f => escala.historico[f.id] && escala.historico[f.id].horasTrabalhadas > 0)
+    const funcsDaEscala = funcionarios.filter(f => escala.historico[f.id] && (escala.historico[f.id].horasTrabalhadas > 0 || escala.historico[f.id].horasTrabalhadas < 0))
                                       .sort((a,b) => a.nome.localeCompare(b.nome));
     
     let html = '<h4>Resumo de Horas no Período</h4>';
@@ -556,7 +649,11 @@ function renderResumoDetalhado(escala) {
         if (horasTrabalhadas > metaHoras) {
             const horasExtras = horasTrabalhadas - metaHoras;
             extraInfo = `<span style="color:var(--danger); font-weight:bold;"> (+${horasExtras.toFixed(2)}h extra)</span>`;
+        } else if (horasTrabalhadas < metaHoras) {
+             const horasFaltantes = metaHoras - horasTrabalhadas;
+             extraInfo = `<span style="color:var(--brand); font-weight:bold;"> (-${horasFaltantes.toFixed(2)}h)</span>`;
         }
+
 
         html += `<p style="margin: 4px 0;"><strong>${func.nome}:</strong> ${horasTrabalhadas.toFixed(2)}h / ${metaHoras.toFixed(2)}h${extraInfo}</p>`;
     });

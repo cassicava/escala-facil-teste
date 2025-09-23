@@ -295,8 +295,8 @@ html[data-theme="dark"] .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     margin-left: 8px;
 }
 
-/* --- NOVOS ESTILOS PARA O GRID DO PASSO 2 --- */
-.passo2-grid {
+/* --- NOVOS ESTILOS PARA O GRID DO PASSO 1 e 2 --- */
+.passo1-grid, .passo2-grid {
     display: grid;
     grid-template-columns: 1fr 1.2fr; /* Coluna da direita um pouco maior */
     gap: 24px;

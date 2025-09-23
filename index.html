@@ -274,87 +274,106 @@
     <section id="page-gerar-escala" class="page">
         <h1>Gerar Nova Escala</h1>
         <div id="gerador-container">
-          <div class="card">
-              <div id="passo1-selecao" class="wizard-step active">
-                  <h3>Passo 1: Selecione o Cargo e o Período</h3>
-                  <div class="form-row">
-                      <label class="form-field-half">Cargo para gerar a escala
-                          <select id="escCargo"></select>
-                      </label>
-                  </div>
-                  <div class="form-row form-row-vcenter">
-                      <label>Data de Início <input type="date" id="escIni"></label>
-                      <label>Data de Fim <input type="date" id="escFim" disabled></label>
-                      <span id="escResumoDias" class="dias-resumo"></span>
-                  </div>
-                  <div class="form-row">
-                      <button id="btn-goto-passo2" class="primary ml-auto">Próximo Passo</button>
-                  </div>
-              </div>
+            <div id="passo1-selecao" class="wizard-step active card">
+                <h3>Passo 1: Selecione o Período e Feriados</h3>
+                <div class="passo1-grid">
+                    <fieldset class="regras-fieldset">
+                        <legend>Cargo e Período</legend>
+                        <div class="form-row">
+                            <label style="width:100%">Cargo para a escala
+                                <select id="escCargo"></select>
+                            </label>
+                        </div>
+                        <div class="form-row form-row-vcenter">
+                            <label>Data de Início <input type="date" id="escIni"></label>
+                            <label>Data de Fim <input type="date" id="escFim" disabled></label>
+                        </div>
+                        <span id="escResumoDias" class="dias-resumo-box">Selecione o período para ver a duração da escala.</span>
+                    </fieldset>
+                    <fieldset class="regras-fieldset">
+                        <legend>Feriados no período</legend>
+                        <div class="form-row" style="gap: 8px;">
+                            <input type="date" class="input-sm" id="feriado-data-input">
+                            <input type="text" id="feriado-nome-input" placeholder="Nome do feriado" style="flex-grow: 1;">
+                            <div class="toggle-group" id="feriado-trabalha-toggle">
+                                <button type="button" class="toggle-btn active" data-value="sim">Sim, Trabalham</button>
+                                <button type="button" class="toggle-btn" data-value="nao">Não, Folga</button>
+                            </div>
+                            <button class="secondary" id="btn-add-feriado">Adicionar</button>
+                        </div>
+                        <div class="form-row-aligned" style="margin-top: 12px;">
+                            <label>Descontar horas da carga horária?</label>
+                            <div class="toggle-group" id="feriado-descontar-toggle">
+                                <button type="button" class="toggle-btn active" data-value="nao">Não</button>
+                                <button type="button" class="toggle-btn" data-value="sim">Sim</button>
+                            </div>
+                            <div id="feriado-horas-desconto-container" class="form-row" style="margin: 0; display: none;">
+                                <input type="number" id="feriado-horas-desconto" class="input-sm" placeholder="Horas" min="1" />
+                            </div>
+                        </div>
+                        <div class="feriados-tags" id="feriados-tags-container"></div>
+                        <div class="explanation-box" style="margin-top: 12px;">
+                            Se o feriado for "Não, Folga", o gerador não escalará ninguém neste dia. Se for "Sim, trabalham", o dia será incluído na escala e destacado com a cor azul para fácil identificação.
+                        </div>
+                        <p class="explanation-box" style="margin-top: 12px;">
+                            A opção de descontar horas é independente da folga e serve para ajustar a carga horária total da escala.
+                        </p>
+                    </fieldset>
+                </div>
+                <div class="form-row">
+                    <button id="btn-goto-passo2" class="primary ml-auto">Próximo Passo</button>
+                </div>
+            </div>
 
-              <div id="passo2-cobertura" class="wizard-step">
-                  <h3>Passo 2: Defina Cobertura e Regras Gerais</h3>
-                  
-                  <div class="passo2-grid">
-                      <fieldset class="regras-fieldset">
-                          <legend>Cobertura de Turnos</legend>
-                          <div class="form-row-aligned">
-                              <label>Definir cobertura manualmente?</label>
-                              <div class="toggle-group" id="cobertura-manual-toggle">
-                                  <button type="button" class="toggle-btn active" data-value="nao">Não</button>
-                                  <button type="button" class="toggle-btn" data-value="sim">Sim</button>
-                              </div>
-                          </div>
-                          <div id="cobertura-manual-container" class="hidden">
-                              <div id="cobertura-turnos-container"></div>
-                              <div class="explanation-box" style="margin-top: 12px;">
-                                  Defina o número <strong>mínimo</strong> de funcionários necessários para cada turno. O algoritmo tentará preencher esta demanda.
-                              </div>
-                          </div>
-                      </fieldset>
-  
-                      <fieldset class="regras-fieldset">
-                          <legend>Regras da Escala</legend>
-                          <div class="regra-item">
-                              <div class="form-row-aligned">
-                                  <label for="maxDiasConsecutivos">Máximo de dias de trabalho consecutivos:</label>
-                                  <input type="number" id="maxDiasConsecutivos" class="input-sm" value="6" min="1">
-                              </div>
-                          </div>
-                          <div class="regra-item">
-                              <label>Feriados no período:</label>
-                              <div class="form-row" style="gap: 8px;">
-                                  <input type="date" class="input-sm" id="feriado-data-input">
-                                  <input type="text" id="feriado-nome-input" placeholder="Nome do feriado" style="flex-grow: 1;">
-                                  <div class="toggle-group" id="feriado-trabalha-toggle">
-                                      <button type="button" class="toggle-btn active" data-value="sim">Trabalha</button>
-                                      <button type="button" class="toggle-btn" data-value="nao">Não</button>
-                                  </div>
-                                  <button class="secondary" id="btn-add-feriado">Adicionar</button>
-                              </div>
-                              <div class="feriados-tags" id="feriados-tags-container"></div>
-                              <div class="explanation-box" style="margin-top: 12px;">
-                                  Se um feriado for "Não Trabalha", nenhum turno será criado no dia. Se for "Trabalha", o dia será destacado na escala.
-                              </div>
-                          </div>
-                      </fieldset>
-                  </div>
-
-                  <div class="form-row">
-                      <button id="btn-back-passo1" class="secondary">Voltar</button>
-                      <button id="btn-goto-passo3" class="primary ml-auto">Próximo Passo</button>
-                  </div>
-              </div>
-              <div id="passo3-excecoes" class="wizard-step">
-                  <h3>Passo 3: Configure Férias e Folgas para a Equipe</h3>
-                  <p class="muted">Marque os dias em que funcionários específicos não devem ser escalados.</p>
-                  <div id="excecoes-funcionarios-container"></div>
-                  <div class="form-row">
-                      <button id="btn-back-passo2" class="secondary">Voltar</button>
-                      <button id="btnGerarEscala" class="primary ml-auto">🎉 Gerar Escala</button>
-                  </div>
-              </div>
-          </div>
+            <div id="passo2-cobertura" class="wizard-step card">
+                <h3>Passo 2: Defina Cobertura e Regras Gerais</h3>
+                <div class="passo2-grid">
+                    <fieldset class="regras-fieldset">
+                        <legend>Cobertura de Turnos</legend>
+                        <div class="form-row-aligned">
+                            <label>Definir cobertura manualmente?</label>
+                            <div class="toggle-group" id="cobertura-manual-toggle">
+                                <button type="button" class="toggle-btn active" data-value="nao">Não</button>
+                                <button type="button" class="toggle-btn" data-value="sim">Sim</button>
+                            </div>
+                        </div>
+                        <div id="cobertura-manual-container" class="hidden">
+                            <div id="cobertura-turnos-container"></div>
+                            <div class="explanation-box" style="margin-top: 12px;">
+                                Defina o número <strong>mínimo</strong> de funcionários necessários para cada turno. O algoritmo tentará preencher esta demanda.
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="regras-fieldset">
+                        <legend>Regras da Escala</legend>
+                        <div class="regra-item">
+                            <div class="form-row-aligned">
+                                <label for="maxDiasConsecutivos">Máximo de dias de trabalho consecutivos:</label>
+                                <input type="number" id="maxDiasConsecutivos" class="input-sm" value="6" min="1">
+                            </div>
+                        </div>
+                        <div class="regra-item">
+                            <div class="form-row-aligned">
+                                <label for="minFolgasFimSemana">Mínimo de fins de semana de folga por mês:</label>
+                                <input type="number" id="minFolgasFimSemana" class="input-sm" value="2" min="0">
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="form-row">
+                    <button id="btn-back-passo1" class="secondary">Voltar</button>
+                    <button id="btn-goto-passo3" class="primary ml-auto">Próximo Passo</button>
+                </div>
+            </div>
+            <div id="passo3-excecoes" class="wizard-step card">
+                <h3>Passo 3: Configure Férias e Folgas para a Equipe</h3>
+                <p class="muted">Marque os dias em que funcionários específicos não devem ser escalados.</p>
+                <div id="excecoes-funcionarios-container"></div>
+                <div class="form-row">
+                    <button id="btn-back-passo2" class="secondary">Voltar</button>
+                    <button id="btnGerarEscala" class="primary ml-auto">🎉 Gerar Escala</button>
+                </div>
+            </div>
         </div>
         
         <div id="escalaView" class="hidden">

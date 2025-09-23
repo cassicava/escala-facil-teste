@@ -37,6 +37,39 @@ function calcCarga(inicio, fim, almocoMin) {
 function addDays(dateISO,n){ const d=new Date(dateISO); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
 function dateRangeInclusive(startISO,endISO){ const days=[]; let d=startISO; while(d<=endISO){ days.push(d); d=addDays(d,1); } return days; }
 
+function getWeekNumber(d) {
+    // Copia a data para não modificar a original
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    // Define para o dia da semana mais próximo de quinta-feira
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    // Pega o início do ano
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    // Calcula o número da semana
+    var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return weekNo;
+}
+
+function getFimDeSemanaNoMes(mesAno) {
+    const [ano, mes] = mesAno.split('-').map(Number);
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+    const finsDeSemana = [];
+    const semanas = new Set();
+    
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+        const data = new Date(ano, mes - 1, dia);
+        if (data.getDay() === 0 || data.getDay() === 6) { // 0 = Domingo, 6 = Sábado
+            const semanaId = getWeekNumber(data);
+            const fimDeSemanaId = `${mesAno}-${semanaId}`;
+            if (!semanas.has(fimDeSemanaId)) {
+                finsDeSemana.push({ id: fimDeSemanaId, dates: [] });
+                semanas.add(fimDeSemanaId);
+            }
+            finsDeSemana.find(fs => fs.id === fimDeSemanaId).dates.push(data.toISOString().slice(0, 10));
+        }
+    }
+    return finsDeSemana;
+}
+
 function showToast(message) {
     const toast = $("#toast");
     $("#toastMessage").textContent = message;
