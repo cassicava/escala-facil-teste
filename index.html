@@ -65,12 +65,12 @@
       </div>
       
       <div class="home-grid-principal">
-        <a class="card home-card" data-goto="turnos"><span class="card-step">1</span><h3>🕒 Turnos</h3><p>Primeiro, crie os horários de trabalho, como 'Manhã' ou 'Noturno'.</p></a>
-        <a class="card home-card" data-goto="cargos"><span class="card-step">2</span><h3>🏢 Cargos</h3><p>Depois, crie os cargos e associe os turnos que cada um pode cumprir.</p></a>
-        <a class="card home-card" data-goto="funcionarios"><span class="card-step">3</span><h3>👤 Funcionários</h3><p>Por fim, adicione seus funcionários, definindo seus cargos e disponibilidade.</p></a>
+        <a class="card home-card" data-goto="turnos"><span class="card-step">Passo 1</span><h3>🕒 Turnos</h3><p>Primeiro, crie os horários de trabalho, como 'Manhã' ou 'Noturno'.</p></a>
+        <a class="card home-card" data-goto="cargos"><span class="card-step">Passo 2</span><h3>🏢 Cargos</h3><p>Depois, crie os cargos e associe os turnos que cada um pode cumprir.</p></a>
+        <a class="card home-card" data-goto="funcionarios"><span class="card-step">Passo 3</span><h3>👤 Funcionários</h3><p>Por fim, adicione seus funcionários, definindo seus cargos e disponibilidade.</p></a>
       </div>
       <div class="home-grid-secundario">
-        <a class="card home-card" data-goto="gerar-escala"><h3>📅 Gerar Nova Escala</h3><p>Com tudo configurado, selecione um cargo e o período para gerar a escala.</p></a>
+        <a class="card home-card card-animated-border" data-goto="gerar-escala"><h3>📅 Gerar Nova Escala</h3><p>Com tudo configurado, selecione um cargo e o período para gerar a escala.</p></a>
         <a class="card home-card" data-goto="escalas-salvas"><h3>🗂️ Escalas Salvas</h3><p>Acesse e gerencie as escalas que você já salvou anteriormente.</p></a>
       </div>
       <div class="home-grid-terciario">
@@ -116,9 +116,9 @@
           </fieldset>
   
           <div class="form-row">
-            <button id="btnSalvarTurno" class="primary">Salvar Turno</button>
+            <button id="btnSalvarTurno" class="primary">💾 Salvar Turno</button>
             <button id="btnCancelarEdTurno" class="secondary hidden">Cancelar Edição</button>
-            <button id="btnLimparTurno" class="secondary ml-auto">Limpar</button>
+            <button id="btnLimparTurno" class="secondary ml-auto">🗑️ Limpar</button>
           </div>
         </div>
         <div class="card card-lista">
@@ -171,9 +171,9 @@
             </fieldset>
 
             <div class="form-row">
-              <button id="btnSalvarCargo" class="primary">Salvar Cargo</button>
+              <button id="btnSalvarCargo" class="primary">💾 Salvar Cargo</button>
               <button id="btnCancelarEdCargo" class="secondary hidden">Cancelar Edição</button>
-              <button id="btnLimparCargo" class="secondary ml-auto">Limpar</button>
+              <button id="btnLimparCargo" class="secondary ml-auto">🗑️ Limpar</button>
             </div>
           </div>
           <div class="card card-lista">
@@ -197,7 +197,7 @@
           </div>
   
           <div class="form-row">
-            <label class="form-field-half">Cargo<select id="funcCargo"><option value="">Selecione um cargo</option></select></label>
+            <label class="form-field-half">Cargo<select id="funcCargo"></select></label>
           </div>
   
           <fieldset class="form-section">
@@ -256,9 +256,9 @@
           </fieldset>
   
           <div class="form-row">
-            <button id="btnSalvarFunc" class="primary">Salvar Funcionário</button>
+            <button id="btnSalvarFunc" class="primary">💾 Salvar Funcionário</button>
             <button id="btnCancelarEdFunc" class="secondary hidden">Cancelar Edição</button>
-            <button id="btnLimparFunc" class="secondary ml-auto">Limpar</button>
+            <button id="btnLimparFunc" class="secondary ml-auto">🗑️ Limpar</button>
           </div>
         </div>
         <div class="card card-lista">
@@ -274,7 +274,7 @@
     <section id="page-gerar-escala" class="page">
         <h1>Gerar Nova Escala</h1>
         <div id="gerador-container">
-            <div id="passo1-selecao" class="wizard-step active card">
+            <div id="passo1-selecao" class="wizard-step active card card-animated-border">
                 <h3>Passo 1: Selecione o Período e Feriados</h3>
                 <div class="passo1-grid">
                     <fieldset class="regras-fieldset">
@@ -308,24 +308,25 @@
                                 <button type="button" class="toggle-btn" data-value="sim">Sim</button>
                             </div>
                             <div id="feriado-horas-desconto-container" class="form-row" style="margin: 0; display: none;">
-                                <input type="number" id="feriado-horas-desconto" class="input-sm" placeholder="Horas" min="1" />
+                                <input type="number" id="feriado-horas-desconto" class="input-sm" placeholder="Horas" min="0" />
                             </div>
                         </div>
                         <div class="feriados-tags" id="feriados-tags-container"></div>
                         <div class="explanation-box" style="margin-top: 12px;">
-                            Se o feriado for "Não, Folga", o gerador não escalará ninguém neste dia. Se for "Sim, trabalham", o dia será incluído na escala e destacado com a cor azul para fácil identificação.
+                            Se o feriado for **"Não, Folga"**, o gerador não escalará ninguém neste dia. Se for **"Sim, Trabalham"**, o dia será incluído na escala e destacado com a cor azul para fácil identificação.
                         </div>
-                        <p class="explanation-box" style="margin-top: 12px;">
-                            A opção de descontar horas é independente da folga e serve para ajustar a carga horária total da escala.
-                        </p>
+                        <div class="explanation-box" style="margin-top: 12px;">
+                            A opção de **descontar horas** é independente da folga e serve para ajustar a carga horária total da escala.
+                        </div>
                     </fieldset>
                 </div>
                 <div class="form-row">
-                    <button id="btn-goto-passo2" class="primary ml-auto">Próximo Passo</button>
+                    <button id="btn-goto-passo2" class="primary ml-auto">Próximo Passo ></button>
                 </div>
             </div>
 
-            <div id="passo2-cobertura" class="wizard-step card">
+            <div id="passo2-cobertura" class="wizard-step card card-animated-border">
+                <button id="btn-back-passo1" class="secondary button-voltar">< Voltar</button>
                 <h3>Passo 2: Defina Cobertura e Regras Gerais</h3>
                 <div class="passo2-grid">
                     <fieldset class="regras-fieldset">
@@ -358,28 +359,42 @@
                                 <input type="number" id="minFolgasFimSemana" class="input-sm" value="2" min="0">
                             </div>
                         </div>
+                        <div class="regra-item">
+                            <div class="form-row-aligned">
+                                <label>Otimizar distribuição de folgas?</label>
+                                <div class="toggle-group" id="otimizar-folgas-toggle">
+                                    <button type="button" class="toggle-btn active" data-value="nao">Não</button>
+                                    <button type="button" class="toggle-btn" data-value="sim">Sim</button>
+                                </div>
+                            </div>
+                            <div class="explanation-box" style="margin-top: 12px;">
+                                Se ativado, o gerador tentará agrupar as folgas regulares do funcionário em períodos consecutivos para criar blocos de descanso maiores.
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
                 <div class="form-row">
-                    <button id="btn-back-passo1" class="secondary">Voltar</button>
-                    <button id="btn-goto-passo3" class="primary ml-auto">Próximo Passo</button>
+                    <button id="btn-goto-passo3" class="primary ml-auto">Próximo Passo ></button>
                 </div>
             </div>
-            <div id="passo3-excecoes" class="wizard-step card">
+            <div id="passo3-excecoes" class="wizard-step card card-animated-border">
+                <button id="btn-back-passo2" class="secondary button-voltar">< Voltar</button>
                 <h3>Passo 3: Configure Férias e Folgas para a Equipe</h3>
                 <p class="muted">Marque os dias em que funcionários específicos não devem ser escalados.</p>
                 <div id="excecoes-funcionarios-container"></div>
+                <div class="explanation-box" style="margin-top: 12px;">
+                    O campo **"Carência"** define um período de dias de descanso **após o término** de férias ou afastamento. Durante a carência, o funcionário não será escalado. Para acomodar esse período, o gerador de escalas utilizará as folgas regulares do funcionário, garantindo seu descanso sem gerar folgas adicionais que não estavam previstas.
+                </div>
                 <div class="form-row">
-                    <button id="btn-back-passo2" class="secondary">Voltar</button>
-                    <button id="btnGerarEscala" class="primary ml-auto">🎉 Gerar Escala</button>
+                    <button id="btnGerarEscala" class="primary btn-cta ml-auto">Gerar Escala</button>
                 </div>
             </div>
         </div>
         
         <div id="escalaView" class="hidden">
             <div class="card">
+                <button id="btnVoltarPasso3" class="secondary button-voltar">< Voltar para Ajustes</button>
                 <h2 id="escalaViewTitle">Visualização da Escala</h2>
-                <button id="btnVoltarPasso3" class="secondary">Voltar para Ajustes</button>
                 <p id="escalaResumo" class="muted" style="margin-top: 16px;"></p>
             </div>
             
@@ -394,8 +409,8 @@
             </div>
 
             <div class="bottom-actions-container">
-                <button id="btnExcluirEscala" class="danger">Excluir e Gerar Novamente</button>
-                <button id="btnSalvarEscala" class="primary">Salvar Escala</button>
+                <button id="btnExcluirEscala" class="danger">🔥 Excluir e Gerar Novamente</button>
+                <button id="btnSalvarEscala" class="primary">💾 Salvar Escala</button>
             </div>
         </div>
     </section>
@@ -409,8 +424,8 @@
 
         <div id="escalaSalvaView" class="hidden">
              <div class="card">
+                <button id="btnVoltarParaLista" class="secondary button-voltar">< Voltar para a Lista</button>
                 <h2 id="escalaSalvaViewTitle">Visualização da Escala</h2>
-                <button id="btnVoltarParaLista" class="secondary">Voltar para a Lista</button>
                 <p id="escalaSalvaResumo" class="muted" style="margin-top: 16px;"></p>
              </div>
              <div class="card card-lista">
@@ -437,7 +452,7 @@
                 </div>
             </div>
             <div class="form-row">
-                <button id="btnSalvarConfig" class="primary">Salvar</button>
+                <button id="btnSalvarConfig" class="primary">💾 Salvar</button>
             </div>
         </div>
         <div class="card card-lista">
@@ -454,7 +469,7 @@
         <p id="modalMessage"></p>
         <div class="modal-actions">
             <button id="modalCancel" class="secondary">Cancelar</button>
-            <button id="modalConfirm" class="primary">Confirmar</button>
+            <button id="modalConfirm" class="primary">✓ Confirmar</button>
         </div>
     </div>
   </div>
@@ -462,12 +477,16 @@
   <div id="toast" class="toast hidden">
     <p id="toastMessage"></p>
   </div>
-
+  
+  <script src="js/constants.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/store.js"></script>
   <script src="js/turnos.js"></script>
   <script src="js/cargos.js"></script>
   <script src="js/funcionarios.js"></script>
+  <script src="js/escalas-gerador.js"></script>
+  <script src="js/escalas-interface.js"></script>
+  <script src="js/escalas-visualizacao.js"></script>
   <script src="js/escalas.js"></script>
   <script src="js/escalas-salvas.js"></script>
   <script src="js/configuracoes.js"></script>

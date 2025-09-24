@@ -2,16 +2,6 @@
  * 🛠️ Utilidades / Persistência
  **************************************/
 
-const DIAS_SEMANA = [
-    { id: 'dom', nome: 'Domingo', abrev: 'D' }, 
-    { id: 'seg', nome: 'Segunda', abrev: 'S' },
-    { id: 'ter', nome: 'Terça', abrev: 'T' }, 
-    { id: 'qua', nome: 'Quarta', abrev: 'Q' },
-    { id: 'qui', nome: 'Quinta', abrev: 'Q' }, 
-    { id: 'sex', nome: 'Sexta', abrev: 'S' },
-    { id: 'sab', nome: 'Sábado', abrev: 'S' }
-];
-
 const $ = (sel, el=document) => el.querySelector(sel);
 const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
 const uid = () => Math.random().toString(36).slice(2,10);

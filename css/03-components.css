@@ -26,11 +26,9 @@
     position: absolute;
     top: -10px;
     left: -10px;
-    width: 32px;
-    height: 32px;
     background-color: var(--brand);
     color: white;
-    border-radius: 50%;
+    border-radius: 999px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -38,6 +36,7 @@
     font-size: 0.9rem;
     border: 3px solid var(--card);
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 4px 12px;
 }
 .home-card:hover {
     transform: translateY(-4px);
@@ -195,30 +194,62 @@ input:disabled {
 
 /* --- BOTÕES --- */
 button {
-  padding: 10px 14px;
-  border: none;
+  padding: 8px 14px; /* Padding ajustado para a borda */
   border-radius: 999px;
-  background: #f1f5f9;
   cursor: pointer;
+  background: transparent; /* Fundo transparente por padrão */
+  border: 2px solid; /* Borda de 2px sólida */
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
 }
+
 button.primary {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+button.primary:hover {
   background: var(--brand);
   color: #fff;
 }
-button.primary:hover {
-  background: var(--brand-2);
-}
+
 button.secondary {
-  background: #e2e8f0;
-  color: #0f172a;
+  border-color: var(--secondary);
+  color: var(--secondary);
 }
+button.secondary:hover {
+  background: var(--secondary);
+  color: #fff;
+}
+
 button.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+button.danger:hover {
   background: var(--danger);
   color: #fff;
 }
-button.danger:hover {
-  background: var(--danger-2);
+
+/* Botão de voltar posicionado no topo */
+.button-voltar {
+  margin-bottom: 16px;
+  align-self: flex-start; /* Alinha o botão à esquerda no container flex */
 }
+
+/* NOVO: Botão de Ação Principal (Call to Action) */
+.btn-cta {
+    background: linear-gradient(45deg, #3b82f6, var(--brand));
+    color: #fff;
+    border: none;
+    padding: 10px 16px; /* Padding compensa a falta de borda */
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+}
+.btn-cta:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+}
+
+
 .danger-sm {
     padding: 2px 8px;
     font-size: 0.9rem;
@@ -718,4 +749,43 @@ html[data-theme="dark"] .tab-btn:hover {
 .dias-resumo-placeholder {
     font-style: italic;
     color: var(--muted);
+}
+
+
+/* --- NOVOS ESTILOS PARA O CARD DE DESTAQUE --- */
+@keyframes animated-gradient-background {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 150% 50%; }
+}
+.card-animated-border {
+  border: 1px solid transparent; 
+  overflow: hidden;
+}
+.card-animated-border::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    background: linear-gradient(
+        to right, 
+        #00BFFF, 
+        #FF00FF, 
+        #FF0000,
+        #FF00FF,
+        #00BFFF
+    );
+    background-size: 300% 100%;
+    animation: animated-gradient-background 6s linear infinite;
+    border-radius: var(--radius);
+}
+.card-animated-border::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    background-color: var(--card);
+    border-radius: calc(var(--radius) - 2px);
+    z-index: -1;
 }

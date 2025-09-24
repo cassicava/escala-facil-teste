@@ -2,6 +2,13 @@
  * 🚀 Inicialização e Navegação
  **************************************/
 
+// Objeto para controlar o estado "sujo" (dirty) dos formulários
+const dirtyForms = {
+    turnos: false,
+    cargos: false,
+    funcionarios: false,
+};
+
 function updateWelcomeMessage() {
     const welcomeEl = $("#welcomeTitle");
     if (!welcomeEl) return;
@@ -20,9 +27,31 @@ function applyTheme(theme) {
 }
 
 async function go(page) {
-    const currentPage = $('.page.active');
+    const currentPageEl = $('.page.active');
+    if (!currentPageEl) { // Fallback para o primeiro carregamento
+        $$(".page").forEach(p => p.classList.remove("active"));
+        $(`#page-${page}`).classList.add("active");
+        $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
+        return;
+    }
+
+    const currentPageId = currentPageEl.id.replace('page-', '');
     
-    if (currentPage && currentPage.id === 'page-gerar-escala' && geradorState.cargoId && page !== 'gerar-escala') {
+    // Verifica se a página atual tem um formulário com dados não salvos
+    if (dirtyForms[currentPageId]) {
+        const confirmado = await showConfirm({
+            title: "Descartar Alterações?",
+            message: "Você tem alterações não salvas nesta página. Tem certeza de que deseja sair e perdê-las?",
+            confirmText: "Sim, Sair",
+            cancelText: "Não, Ficar"
+        });
+        if (!confirmado) {
+            return; // Interrompe a navegação se o usuário cancelar
+        }
+    }
+
+    // Lógica para sair do gerador de escala (que tem seu próprio estado)
+    if (currentPageId === 'gerar-escala' && geradorState.cargoId && page !== 'gerar-escala') {
         const confirmado = await showConfirm({
             title: "Sair da Geração de Escala?",
             message: "Você tem certeza que deseja sair? Todos os dados não salvos nesta tela serão perdidos.",
@@ -34,65 +63,59 @@ async function go(page) {
         }
     }
 
-    if (currentPage) {
-        switch (currentPage.id) {
-            case 'page-turnos':
-                cancelEditTurno();
-                break;
-            case 'page-cargos':
-                cancelEditCargo();
-                break;
-            case 'page-funcionarios':
-                cancelEditFunc();
-                break;
-            case 'page-gerar-escala':
-                resetGeradorEscala();
-                break;
-        }
+    // Limpa e reseta os formulários ao sair da página
+    switch (currentPageId) {
+        case 'turnos':
+            cancelEditTurno();
+            break;
+        case 'cargos':
+            cancelEditCargo();
+            break;
+        case 'funcionarios':
+            cancelEditFunc();
+            break;
+        case 'gerar-escala':
+            resetGeradorEscala();
+            break;
     }
     
     window.scrollTo(0, 0);
     $$(".page").forEach(p => p.classList.toggle("active", p.id === `page-${page}`));
     $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
+
+    if (page === 'home') {
+        updateWelcomeMessage();
+    }
 }
 
-// Função central de renderização que é chamada sempre que o estado muda
 function renderAll() {
     console.log("Estado atualizado. Re-renderizando componentes...");
-    const state = store.getState();
     
-    // Renderiza as tabelas
     renderTurnos();
     renderCargos();
     renderFuncs();
     renderEscalasList();
     
-    // Renderiza os selects e componentes que dependem de outros dados
     renderTurnosSelects();
     renderFuncCargoSelect();
+    
+    // --- LINHA ADICIONADA PARA CORRIGIR O BUG ---
+    // Renderiza a lista de cargos na tela de gerar escala.
     renderEscCargoSelect();
     
-    // Atualiza outras partes da UI
     loadConfigForm();
     updateWelcomeMessage();
 }
 
 
 function init() {
-  // Carrega os dados do localStorage para o store
   store.dispatch('LOAD_STATE');
-  
-  // 'Inscreve' a função renderAll para ser chamada sempre que o estado mudar
   store.subscribe(renderAll);
   
-  // Aplica o tema inicial
   const { config } = store.getState();
   applyTheme(config.theme || 'light');
   
-  // Renderiza tudo pela primeira vez
   renderAll();
-
-  // Define a página inicial
   go("home");
 }
 

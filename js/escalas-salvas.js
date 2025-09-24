@@ -2,13 +2,6 @@
  * 🗂️ Escalas Salvas
  **************************************/
 
-const TIPOS_FOLGA_SALVA = [
-    { nome: "Folga Normal", sigla: "FN" },
-    { nome: "Folga Abonada", sigla: "FA" },
-    { nome: "Atestado Médico", sigla: "AM" },
-    { nome: "Folga Aniversário", sigla: "ANIV" }
-];
-
 function renderEscalasList(){
   const { escalas } = store.getState();
   const ul = $("#listaEscalas");
@@ -104,7 +97,7 @@ function renderEscalaSalvaTable(escala) {
                 } else if (excecoesFunc.afastamento.dates.includes(date)) {
                     tableHTML += `<td class="celula-excecao" title="Motivo: ${excecoesFunc.afastamento.motivo || 'Não informado'}">Afastado</td>`;
                 } else if (folgaDoDia) {
-                    const sigla = TIPOS_FOLGA_SALVA.find(tf => tf.nome === folgaDoDia.tipo)?.sigla || 'F';
+                    const sigla = TIPOS_FOLGA.find(tf => tf.nome === folgaDoDia.tipo)?.sigla || 'F';
                     tableHTML += `<td class="celula-excecao" data-tipo-folga="${folgaDoDia.tipo}" title="${folgaDoDia.tipo}">${sigla}</td>`;
                 } else {
                     tableHTML += `<td></td>`;

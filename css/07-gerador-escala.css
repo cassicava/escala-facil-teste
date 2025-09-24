@@ -30,6 +30,9 @@
     max-width: 120px;
     padding: 6px;
 }
+#page-gerar-escala input[type="date"] {
+    min-width: 130px;
+}
 
 #excecoes-funcionarios-container {
     display: flex;

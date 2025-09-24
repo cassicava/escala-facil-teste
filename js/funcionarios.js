@@ -6,44 +6,57 @@ let editingFuncId=null;
 let lastAddedFuncId = null;
 let funcDisponibilidadeTemporaria = {}; // Objeto para manipular a disponibilidade no formulário
 
+// --- Cache de Elementos DOM ---
+const funcNomeInput = $("#funcNome");
+const funcDocumentoInput = $("#funcDocumento");
+const funcCargoSelect = $("#funcCargo");
+const funcContratoInput = $("#funcContrato");
+const funcPeriodoHorasInput = $("#funcPeriodoHoras");
+const funcCargaHorariaInput = $("#funcCargaHoraria");
+const funcHoraExtraInput = $("#funcHoraExtra");
+const funcTurnosContainer = $("#funcTurnosContainer");
+const filtroFuncionariosInput = $("#filtroFuncionarios");
+const tblFuncionariosBody = $("#tblFuncionarios tbody");
+const btnSalvarFunc = $("#btnSalvarFunc");
+const btnCancelarEdFunc = $("#btnCancelarEdFunc");
+
+
 const SEM_CARGO_DEFINIDO = "Sem Cargo Definido";
 
+function setFuncFormDirty(isDirty) {
+    dirtyForms.funcionarios = isDirty;
+}
+
 // --- Lógicas dos Toggles ---
-$$('#contratoToggleGroup .toggle-btn').forEach(button => {
+$$('#contratoToggleGroup .toggle-btn, #periodoHorasToggleGroup .toggle-btn, #horaExtraToggleGroup .toggle-btn').forEach(button => {
     button.onclick = () => {
-        $$('#contratoToggleGroup .toggle-btn').forEach(btn => btn.classList.remove('active'));
+        const group = button.closest('.toggle-group');
+        group.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
-        $("#funcContrato").value = button.dataset.value;
-        $("#contratoExplicacao").innerHTML = button.dataset.value === 'clt' 
-            ? 'Funcionários <strong>CLT / Concursados</strong> seguirão rigorosamente as regras de descanso obrigatório cadastradas nos turnos.'
-            : 'Funcionários <strong>Prestadores de Serviço</strong> terão as regras de descanso obrigatório ignoradas, permitindo maior flexibilidade.';
+
+        const parentId = group.id;
+        if (parentId === 'contratoToggleGroup') {
+            funcContratoInput.value = button.dataset.value;
+            $("#contratoExplicacao").innerHTML = button.dataset.value === 'clt' 
+                ? 'Funcionários <strong>CLT / Concursados</strong> seguirão rigorosamente as regras de descanso obrigatório cadastradas nos turnos.'
+                : 'Funcionários <strong>Prestadores de Serviço</strong> terão as regras de descanso obrigatório ignoradas, permitindo maior flexibilidade.';
+        } else if (parentId === 'periodoHorasToggleGroup') {
+            funcPeriodoHorasInput.value = button.dataset.value;
+        } else if (parentId === 'horaExtraToggleGroup') {
+            funcHoraExtraInput.value = button.dataset.value;
+        }
+        setFuncFormDirty(true);
     };
 });
 
-$$('#periodoHorasToggleGroup .toggle-btn').forEach(button => {
-    button.onclick = () => {
-        $$('#periodoHorasToggleGroup .toggle-btn').forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        $("#funcPeriodoHoras").value = button.dataset.value;
-    };
-});
-
-$$('#horaExtraToggleGroup .toggle-btn').forEach(button => {
-    button.onclick = () => {
-        $$('#horaExtraToggleGroup .toggle-btn').forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        $("#funcHoraExtra").value = button.dataset.value;
-    };
-});
 
 // --- Lógica de Renderização e Interação da Disponibilidade ---
 
 function renderFuncTurnosForCargo() {
     const { cargos, turnos } = store.getState();
-    const cargoId = $("#funcCargo").value;
-    const container = $("#funcTurnosContainer");
-    container.innerHTML = `<div class="turno-placeholder"><p>Selecione um cargo para ver os turnos disponíveis.</p></div>`;
-    const placeholder = $(".turno-placeholder", container);
+    const cargoId = funcCargoSelect.value;
+    funcTurnosContainer.innerHTML = `<div class="turno-placeholder"><p>Selecione um cargo para ver os turnos disponíveis.</p></div>`;
+    const placeholder = $(".turno-placeholder", funcTurnosContainer);
 
     if (!cargoId) {
         placeholder.style.display = 'block';
@@ -62,8 +75,7 @@ function renderFuncTurnosForCargo() {
     const turnosDoCargo = turnos.filter(t => cargo.turnosIds.includes(t.id))
                                 .sort((a, b) => a.nome.localeCompare(b.nome));
 
-    // Usa a constante global DIAS_SEMANA
-    const diasParaRender = DIAS_SEMANA.filter(d => d.id !== 'dom').concat(DIAS_SEMANA.filter(d => d.id === 'dom')); // Move Dom para o final
+    const diasParaRender = DIAS_SEMANA;
 
     turnosDoCargo.forEach(t => {
         const isTurnoSelecionado = !!funcDisponibilidadeTemporaria[t.id]; 
@@ -94,21 +106,13 @@ function renderFuncTurnosForCargo() {
                 ${diasHtml}
             </div>
         `;
-        container.appendChild(item);
+        funcTurnosContainer.appendChild(item);
 
         const header = item.querySelector('.turno-disponibilidade-header');
         const chkPrincipal = header.querySelector('input[name="turnoPrincipal"]');
-        const diasContainer = item.querySelector('.turno-disponibilidade-dias');
-        const spansDias = $$('.dia-selecionavel', diasContainer);
+        const spansDias = $$('.dia-selecionavel', item);
 
-        header.onclick = (e) => {
-            if (e.target.tagName !== 'INPUT') { 
-                chkPrincipal.checked = !chkPrincipal.checked;
-                chkPrincipal.dispatchEvent(new Event('change'));
-            }
-        };
-
-        chkPrincipal.onchange = () => {
+        const toggleTurnoPrincipal = () => {
             const isChecked = chkPrincipal.checked;
             item.classList.toggle('selecionado', isChecked); 
 
@@ -124,7 +128,16 @@ function renderFuncTurnosForCargo() {
                 delete funcDisponibilidadeTemporaria[t.id];
                 spansDias.forEach(spanDia => spanDia.classList.remove('selecionado-dia'));
             }
+            setFuncFormDirty(true);
         };
+        
+        header.onclick = (e) => {
+            if (e.target.tagName !== 'INPUT') { 
+                chkPrincipal.checked = !chkPrincipal.checked;
+                toggleTurnoPrincipal();
+            }
+        };
+        chkPrincipal.onchange = toggleTurnoPrincipal;
 
         spansDias.forEach(spanDia => {
             spanDia.onclick = () => {
@@ -140,6 +153,7 @@ function renderFuncTurnosForCargo() {
                         if (index > -1) diasDoTurno.splice(index, 1);
                     }
                     funcDisponibilidadeTemporaria[t.id] = diasDoTurno;
+                    setFuncFormDirty(true);
                 }
             };
         });
@@ -149,18 +163,21 @@ function renderFuncTurnosForCargo() {
 
 // --- RESTANTE DO ARQUIVO JS (save, edit, delete, etc.) ---
 
-$("#funcNome").addEventListener("input", (e) => {
-    const input = e.target;
-    if (input.value.length > 0) {
-      input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
-    }
-    validateInput(input);
+[funcNomeInput, funcCargaHorariaInput, funcDocumentoInput].forEach(input => {
+    input.addEventListener("input", (e) => {
+        if (e.target === funcNomeInput && e.target.value.length > 0) {
+            e.target.value = e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1);
+        }
+        validateInput(e.target);
+        setFuncFormDirty(true);
+    });
 });
-$("#funcCargaHoraria").addEventListener("input", (e) => { validateInput(e.target); });
-$("#funcCargo").addEventListener("change", (e) => {
+
+funcCargoSelect.addEventListener("change", (e) => {
     validateInput(e.target);
     funcDisponibilidadeTemporaria = {};
     renderFuncTurnosForCargo();
+    setFuncFormDirty(true);
 });
 
 function validateInput(inputElement) {
@@ -170,33 +187,31 @@ function validateInput(inputElement) {
         inputElement.classList.add('invalid');
     }
 }
-$("#filtroFuncionarios").addEventListener("input", () => { renderFuncs(); });
+filtroFuncionariosInput.addEventListener("input", () => { renderFuncs(); });
 
 function renderFuncCargoSelect(){
   const { cargos } = store.getState();
-  const sel=$("#funcCargo");
-  sel.innerHTML="<option value=''>Selecione um cargo</option>";
+  funcCargoSelect.innerHTML="<option value=''>Selecione um cargo</option>";
   const cargosOrdenados = [...cargos].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
   cargosOrdenados.forEach(c=>{
     const o=document.createElement("option");
     o.value=c.id;
     o.textContent=c.nome;
-    sel.appendChild(o);
+    funcCargoSelect.appendChild(o);
   });
 }
 
 function renderFuncs(){
   const { funcionarios, cargos, turnos } = store.getState();
-  const filtro = $("#filtroFuncionarios").value.toLowerCase();
+  const filtro = filtroFuncionariosInput.value.toLowerCase();
 
-  const tbody = $("#tblFuncionarios tbody");
-  tbody.innerHTML = "";
+  tblFuncionariosBody.innerHTML = "";
   
   const funcsFiltrados = funcionarios.filter(f => f.nome.toLowerCase().includes(filtro));
   const colspan = 7;
 
   if (funcsFiltrados.length === 0) {
-    tbody.innerHTML = funcionarios.length === 0 
+    tblFuncionariosBody.innerHTML = funcionarios.length === 0 
         ? `<tr><td colspan="${colspan}"><div class="empty-state"><div class="empty-state-icon">👤</div><h3>Nenhum Funcionário Cadastrado</h3><p>Comece a cadastrar funcionários para poder gerar escalas.</p></div></td></tr>`
         : `<tr><td colspan="${colspan}" class="muted center">Nenhum funcionário encontrado com o termo "${filtro}".</td></tr>`;
     return;
@@ -216,7 +231,7 @@ function renderFuncs(){
   
   for (const cargoNome of cargosOrdenados) {
       const funcsDoGrupo = agrupados[cargoNome].sort((a,b) => a.nome.localeCompare(b.nome));
-      tbody.innerHTML += `<th colspan="${colspan}" class="group-header ${cargoNome === SEM_CARGO_DEFINIDO ? 'warning' : ''}">${cargoNome}</th>`;
+      tblFuncionariosBody.innerHTML += `<th colspan="${colspan}" class="group-header ${cargoNome === SEM_CARGO_DEFINIDO ? 'warning' : ''}">${cargoNome}</th>`;
       
       funcsDoGrupo.forEach(f => {
           const nomesTurnos = Object.keys(f.disponibilidade || {}).map(id => turnosMap[id]?.nome || "").join(", ") || "Nenhum";
@@ -234,16 +249,16 @@ function renderFuncs(){
             <td>${horaExtra}</td>
             <td>${nomesTurnos}</td>
             <td>
-              <button class="secondary" data-edit="${f.id}">Editar</button>
-              <button class="danger" data-del="${f.id}">Excluir</button>
+              <button class="secondary" data-edit="${f.id}">✏️ Editar</button>
+              <button class="danger" data-del="${f.id}">🔥 Excluir</button>
             </td>
           `;
-          tbody.appendChild(row);
+          tblFuncionariosBody.appendChild(row);
       });
   }
 
   if (lastAddedFuncId) {
-    tbody.querySelector(`tr[data-func-id="${lastAddedFuncId}"]`)?.classList.add('new-item');
+    tblFuncionariosBody.querySelector(`tr[data-func-id="${lastAddedFuncId}"]`)?.classList.add('new-item');
     lastAddedFuncId = null;
   }
   $$(`#tblFuncionarios [data-edit]`).forEach(b=> b.onclick=()=>editFuncInForm(b.dataset.edit));
@@ -252,9 +267,9 @@ function renderFuncs(){
 
 function validateFuncForm() {
     let isValid = true;
-    if (!$("#funcNome").value.trim()) { $("#funcNome").classList.add('invalid'); isValid = false; }
-    if (!$("#funcCargo").value) { $("#funcCargo").classList.add('invalid'); isValid = false; }
-    if (!$("#funcCargaHoraria").value) { $("#funcCargaHoraria").classList.add('invalid'); isValid = false; }
+    if (!funcNomeInput.value.trim()) { funcNomeInput.classList.add('invalid'); isValid = false; }
+    if (!funcCargoSelect.value) { funcCargoSelect.classList.add('invalid'); isValid = false; }
+    if (!funcCargaHorariaInput.value) { funcCargaHorariaInput.classList.add('invalid'); isValid = false; }
     return isValid;
 }
 
@@ -264,7 +279,7 @@ function saveFuncFromForm() {
         return;
     }
     const { funcionarios } = store.getState();
-    const documento = $("#funcDocumento").value.trim();
+    const documento = funcDocumentoInput.value.trim();
     if (documento && funcionarios.some(f => f.documento?.toLowerCase() === documento.toLowerCase() && f.id !== editingFuncId)) {
         return showToast("O número do documento já está em uso por outro funcionário.");
     }
@@ -275,12 +290,12 @@ function saveFuncFromForm() {
 
     const funcData = {
         id: editingFuncId || uid(),
-        nome: $("#funcNome").value.trim(),
-        cargoId: $("#funcCargo").value,
-        tipoContrato: $("#funcContrato").value,
-        cargaHoraria: $("#funcCargaHoraria").value,
-        periodoHoras: $("#funcPeriodoHoras").value,
-        fazHoraExtra: $("#funcHoraExtra").value === 'sim',
+        nome: funcNomeInput.value.trim(),
+        cargoId: funcCargoSelect.value,
+        tipoContrato: funcContratoInput.value,
+        cargaHoraria: funcCargaHorariaInput.value,
+        periodoHoras: funcPeriodoHorasInput.value,
+        fazHoraExtra: funcHoraExtraInput.value === 'sim',
         documento,
         disponibilidade,
     };
@@ -296,48 +311,51 @@ function saveFuncFromForm() {
 }
 
 function editFuncInForm(id) {
-    const { funcionarios } = store.getState();
-    const func = funcionarios.find(f => f.id === id);
-    if (!func) return;
+  const { funcionarios } = store.getState();
+  const func = funcionarios.find(f => f.id === id);
+  if (!func) return;
 
-    cancelEditFunc();
-    editingFuncId = id;
+  cancelEditFunc();
+  editingFuncId = id;
 
-    $("#funcNome").value = func.nome;
-    $("#funcCargo").value = func.cargoId;
-    $("#funcCargaHoraria").value = func.cargaHoraria || '';
-    $("#funcDocumento").value = func.documento || '';
-    
-    $(`#contratoToggleGroup .toggle-btn[data-value="${func.tipoContrato || 'clt'}"]`).click();
-    $(`#periodoHorasToggleGroup .toggle-btn[data-value="${func.periodoHoras || 'semanal'}"]`).click();
-    $(`#horaExtraToggleGroup .toggle-btn[data-value="${func.fazHoraExtra ? 'sim' : 'nao'}"]`).click();
+  funcNomeInput.value = func.nome;
+  funcCargoSelect.value = func.cargoId;
+  funcCargaHorariaInput.value = func.cargaHoraria || '';
+  funcDocumentoInput.value = func.documento || '';
+  
+  $(`#contratoToggleGroup .toggle-btn[data-value="${func.tipoContrato || 'clt'}"]`).click();
+  $(`#periodoHorasToggleGroup .toggle-btn[data-value="${func.periodoHoras || 'semanal'}"]`).click();
+  $(`#horaExtraToggleGroup .toggle-btn[data-value="${func.fazHoraExtra ? 'sim' : 'nao'}"]`).click();
 
-    funcDisponibilidadeTemporaria = JSON.parse(JSON.stringify(func.disponibilidade || {}));
-    renderFuncTurnosForCargo(); 
+  funcDisponibilidadeTemporaria = JSON.parse(JSON.stringify(func.disponibilidade || {}));
+  renderFuncTurnosForCargo(); 
 
-    $("#btnSalvarFunc").textContent = "Salvar Alterações";
-    $("#btnCancelarEdFunc").classList.remove("hidden");
-    window.scrollTo(0, 0);
+  btnSalvarFunc.textContent = "💾 Salvar Alterações";
+  btnCancelarEdFunc.classList.remove("hidden");
+  setFuncFormDirty(false); // Reset dirty on edit
+  window.scrollTo(0, 0);
 }
 
 function cancelEditFunc() {
-    editingFuncId = null;
-    $("#funcNome").value = "";
-    $("#funcCargo").value = "";
-    $("#funcCargaHoraria").value = "";
-    $("#funcDocumento").value = "";
-    
-    $$("#page-funcionarios .invalid").forEach(el => el.classList.remove('invalid'));
+  editingFuncId = null;
+  funcNomeInput.value = "";
+  funcNomeInput.classList.remove('invalid');
+  funcCargoSelect.value = "";
+  funcCargoSelect.classList.remove('invalid');
+  funcCargaHorariaInput.value = "";
+  funcCargaHorariaInput.classList.remove('invalid');
+  funcDocumentoInput.value = "";
+  
+  $(`#contratoToggleGroup .toggle-btn[data-value="clt"]`).click();
+  $(`#periodoHorasToggleGroup .toggle-btn[data-value="semanal"]`).click();
+  $(`#horaExtraToggleGroup .toggle-btn[data-value="nao"]`).click();
+  
+  funcDisponibilidadeTemporaria = {};
+  funcTurnosContainer.innerHTML = `<div class="turno-placeholder"><p>Selecione um cargo para ver os turnos disponíveis.</p></div>`;
 
-    $(`#contratoToggleGroup .toggle-btn[data-value="clt"]`).click();
-    $(`#periodoHorasToggleGroup .toggle-btn[data-value="semanal"]`).click();
-    $(`#horaExtraToggleGroup .toggle-btn[data-value="nao"]`).click();
-    
-    funcDisponibilidadeTemporaria = {};
-    $("#funcTurnosContainer").innerHTML = `<div class="turno-placeholder"><p>Selecione um cargo para ver os turnos disponíveis.</p></div>`;
-
-    $("#btnSalvarFunc").textContent = "Salvar Funcionário";
-    $("#btnCancelarEdFunc").classList.add("hidden");
+  btnSalvarFunc.textContent = "💾 Salvar Funcionário";
+  btnCancelarEdFunc.classList.add("hidden");
+  setFuncFormDirty(false);
 }
 
 async function deleteFuncionario(id) {
@@ -350,6 +368,6 @@ async function deleteFuncionario(id) {
         showToast("Funcionário excluído com sucesso.");
     }
 }
-$("#btnSalvarFunc").onclick = saveFuncFromForm;
-$("#btnCancelarEdFunc").onclick = cancelEditFunc;
+btnSalvarFunc.onclick = saveFuncFromForm;
+btnCancelarEdFunc.onclick = cancelEditFunc;
 $("#btnLimparFunc").onclick = cancelEditFunc;

@@ -5,15 +5,31 @@
 let editingTurnoId = null;
 let lastAddedTurnoId = null; // Para animar a nova linha
 
+// --- Cache de Elementos DOM ---
+const turnoNomeInput = $("#turnoNome");
+const turnoInicioInput = $("#turnoInicio");
+const turnoFimInput = $("#turnoFim");
+const turnoAlmocoInput = $("#turnoAlmoco");
+const turnoCorHiddenInput = $("#turnoCorHidden");
+const turnoCargaSpan = $("#turnoCarga");
+const turnoViraDiaIndicator = $("#turnoViraDia");
+const descansoToggleButtons = $$('#descansoToggleGroup .toggle-btn');
+const descansoHorasInput = $("#turnoDescansoHoras");
+const descansoHiddenInput = $("#descansoObrigatorioHidden");
+const btnSalvarTurno = $("#btnSalvarTurno");
+const btnCancelarEdTurno = $("#btnCancelarEdTurno");
+const filtroTurnosInput = $("#filtroTurnos");
+const tblTurnosBody = $("#tblTurnos tbody");
+
 const PALETA_CORES = [
     '#e2e8f0', '#fecaca', '#fed7aa', '#fef08a', '#d9f99d', '#bfdbfe', '#a5b4fc', '#f5d0fe',
     '#cbd5e1', '#fca5a5', '#fbbf24', '#facc15', '#a3e635', '#93c5fd', '#818cf8', '#e879f9',
     '#94a3b8', '#f87171', '#f97316', '#eab308', '#84cc16', '#60a5fa', '#6366f1', '#d946ef'
 ];
 
-const descansoToggleButtons = $$('#descansoToggleGroup .toggle-btn');
-const descansoHorasInput = $("#turnoDescansoHoras");
-const descansoHiddenInput = $("#descansoObrigatorioHidden");
+function setTurnoFormDirty(isDirty) {
+    dirtyForms.turnos = isDirty;
+}
 
 // LÓGICA ATUALIZADA
 descansoToggleButtons.forEach(button => {
@@ -31,10 +47,11 @@ descansoToggleButtons.forEach(button => {
             descansoHorasInput.value = '';
             validateInput(descansoHorasInput, true); // Remove classe de erro
         }
+        setTurnoFormDirty(true);
     };
 });
 
-$("#turnoNome").addEventListener("input", (e) => {
+turnoNomeInput.addEventListener("input", (e) => {
   const input = e.target;
   if (input.value.length > 0) {
     input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
@@ -44,11 +61,16 @@ $("#turnoNome").addEventListener("input", (e) => {
   } else {
       input.classList.remove('invalid');
   }
+  setTurnoFormDirty(true);
 });
 
-$("#turnoInicio").addEventListener("input", () => validateInput($("#turnoInicio")));
-$("#turnoFim").addEventListener("input", () => validateInput($("#turnoFim")));
-$("#turnoDescansoHoras").addEventListener("input", () => validateInput($("#turnoDescansoHoras")));
+[turnoInicioInput, turnoFimInput, turnoAlmocoInput, descansoHorasInput].forEach(input => {
+    input.addEventListener("input", () => {
+        updateTurnoCargaPreview();
+        if (input === descansoHorasInput) validateInput(descansoHorasInput);
+        setTurnoFormDirty(true);
+    });
+});
 
 function validateInput(inputElement, forceValid = false) {
     if (forceValid || inputElement.value.trim() !== '') {
@@ -58,7 +80,7 @@ function validateInput(inputElement, forceValid = false) {
     }
 }
 
-$("#filtroTurnos").addEventListener("input", () => {
+filtroTurnosInput.addEventListener("input", () => {
     renderTurnos(); // A própria função de render agora pega o filtro
 });
 
@@ -70,50 +92,49 @@ function renderCorPalette() {
         swatch.className = 'color-swatch';
         swatch.style.backgroundColor = cor;
         swatch.dataset.cor = cor;
-        swatch.onclick = () => selectCor(cor);
+        swatch.onclick = () => {
+            selectCor(cor);
+            setTurnoFormDirty(true);
+        };
         container.appendChild(swatch);
     });
 }
 
 function selectCor(cor) {
-    $("#turnoCorHidden").value = cor;
+    turnoCorHiddenInput.value = cor;
     $$('#turnoCorPalette .color-swatch').forEach(sw => {
         sw.classList.toggle('selected', sw.dataset.cor === cor);
     });
 }
 
 function updateTurnoCargaPreview(){
-  const cargaSpan = $("#turnoCarga");
-  const i = $("#turnoInicio").value;
-  const f = $("#turnoFim").value;
-  const a = Number($("#turnoAlmoco").value || 0);
-  const overnightIndicator = $("#turnoViraDia");
+  const i = turnoInicioInput.value;
+  const f = turnoFimInput.value;
+  const a = Number(turnoAlmocoInput.value || 0);
 
   if (i && f) {
-    cargaSpan.textContent = `Carga: ${minutesToHHMM(calcCarga(i, f, a))}`;
-    cargaSpan.classList.add("highlight");
+    turnoCargaSpan.textContent = `Carga: ${minutesToHHMM(calcCarga(i, f, a))}`;
+    turnoCargaSpan.classList.add("highlight");
     const isOvernight = f < i;
-    overnightIndicator.classList.toggle('hidden', !isOvernight);
+    turnoViraDiaIndicator.classList.toggle('hidden', !isOvernight);
   } else {
-    cargaSpan.textContent = "Carga: 00:00";
-    cargaSpan.classList.remove("highlight");
-    overnightIndicator.classList.add('hidden');
+    turnoCargaSpan.textContent = "Carga: 00:00";
+    turnoCargaSpan.classList.remove("highlight");
+    turnoViraDiaIndicator.classList.add('hidden');
   }
 }
-["turnoInicio","turnoFim","turnoAlmoco"].forEach(id=> $(`#${id}`).addEventListener("input",updateTurnoCargaPreview));
 
 function renderTurnos(){
   const { turnos } = store.getState();
-  const filtro = $("#filtroTurnos").value.toLowerCase();
+  const filtro = filtroTurnosInput.value.toLowerCase();
   
-  const tbody=$("#tblTurnos tbody");
-  tbody.innerHTML="";
+  tblTurnosBody.innerHTML="";
   
   const turnosFiltrados = turnos.filter(t => t.nome.toLowerCase().includes(filtro));
   const turnosOrdenados = [...turnosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (turnosOrdenados.length === 0 && filtro.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8">
+      tblTurnosBody.innerHTML = `<tr><td colspan="8">
           <div class="empty-state">
               <div class="empty-state-icon">🕒</div>
               <h3>Nenhum Turno Cadastrado</h3>
@@ -134,14 +155,14 @@ function renderTurnos(){
       <td>${t.almocoMin} min</td><td>${minutesToHHMM(t.cargaMin)}</td>
       <td>${descansoTxt}</td>
       <td>
-        <button class="secondary" data-edit="${t.id}">Editar</button>
-        <button class="danger" data-del="${t.id}">Excluir</button>
+        <button class="secondary" data-edit="${t.id}">✏️ Editar</button>
+        <button class="danger" data-del="${t.id}">🔥 Excluir</button>
       </td>`;
-    tbody.appendChild(tr);
+    tblTurnosBody.appendChild(tr);
   });
 
   if (lastAddedTurnoId) {
-    const novaLinha = tbody.querySelector(`tr[data-turno-id="${lastAddedTurnoId}"]`);
+    const novaLinha = tblTurnosBody.querySelector(`tr[data-turno-id="${lastAddedTurnoId}"]`);
     if (novaLinha) {
       novaLinha.classList.add('new-item');
     }
@@ -154,26 +175,26 @@ function renderTurnos(){
 
 function validateTurnoForm() {
     let isValid = true;
-    const nome = $("#turnoNome").value.trim();
-    const inicio = $("#turnoInicio").value;
-    const fim = $("#turnoFim").value;
+    const nome = turnoNomeInput.value.trim();
+    const inicio = turnoInicioInput.value;
+    const fim = turnoFimInput.value;
     const descansoObrigatorio = descansoHiddenInput.value === 'sim';
-    const descansoHoras = $("#turnoDescansoHoras").value;
+    const descansoHoras = descansoHorasInput.value;
 
     if (!nome) {
-        $("#turnoNome").classList.add('invalid');
+        turnoNomeInput.classList.add('invalid');
         isValid = false;
     }
     if (!inicio) {
-        $("#turnoInicio").classList.add('invalid');
+        turnoInicioInput.classList.add('invalid');
         isValid = false;
     }
     if (!fim) {
-        $("#turnoFim").classList.add('invalid');
+        turnoFimInput.classList.add('invalid');
         isValid = false;
     }
     if (descansoObrigatorio && !descansoHoras) {
-        $("#turnoDescansoHoras").classList.add('invalid');
+        descansoHorasInput.classList.add('invalid');
         isValid = false;
     }
 
@@ -187,14 +208,14 @@ async function saveTurnoFromForm() {
   }
 
   const { turnos } = store.getState();
-  const nome = $("#turnoNome").value.trim();
+  const nome = turnoNomeInput.value.trim();
   
   if (turnos.some(t => t.nome.toLowerCase() === nome.toLowerCase() && t.id !== editingTurnoId)) {
       return showToast("Já existe um turno com esse nome.");
   }
   
-  const inicio = $("#turnoInicio").value;
-  const fim = $("#turnoFim").value;
+  const inicio = turnoInicioInput.value;
+  const fim = turnoFimInput.value;
 
   if (fim < inicio) {
       const confirmado = await showConfirm({
@@ -208,17 +229,17 @@ async function saveTurnoFromForm() {
       }
   }
 
-  const almocoMin = Number($("#turnoAlmoco").value || 0);
+  const almocoMin = Number(turnoAlmocoInput.value || 0);
   const descansoObrigatorio = descansoHiddenInput.value === 'sim';
 
   const dadosTurno = {
       id: editingTurnoId || uid(),
       nome, 
-      cor: $("#turnoCorHidden").value, 
+      cor: turnoCorHiddenInput.value, 
       inicio, 
       fim, 
       almocoMin, 
-      descansoObrigatorioHoras: descansoObrigatorio ? Number($("#turnoDescansoHoras").value || 0) : null,
+      descansoObrigatorioHoras: descansoObrigatorio ? Number(descansoHorasInput.value || 0) : null,
       cargaMin: calcCarga(inicio, fim, almocoMin)
   };
   
@@ -238,48 +259,50 @@ function editTurnoInForm(id) {
   if (!turno) return;
 
   editingTurnoId = id;
-  $("#turnoNome").value = turno.nome;
+  turnoNomeInput.value = turno.nome;
   selectCor(turno.cor || PALETA_CORES[0]);
-  $("#turnoInicio").value = turno.inicio;
-  $("#turnoFim").value = turno.fim;
-  $("#turnoAlmoco").value = turno.almocoMin || "";
+  turnoInicioInput.value = turno.inicio;
+  turnoFimInput.value = turno.fim;
+  turnoAlmocoInput.value = turno.almocoMin || "";
   
   if(turno.descansoObrigatorioHoras) {
       $(`#descansoToggleGroup .toggle-btn[data-value="sim"]`).click();
-      $("#turnoDescansoHoras").value = turno.descansoObrigatorioHoras;
+      descansoHorasInput.value = turno.descansoObrigatorioHoras;
   } else {
       $(`#descansoToggleGroup .toggle-btn[data-value="nao"]`).click();
-      $("#turnoDescansoHoras").value = '';
+      descansoHorasInput.value = '';
   }
 
   updateTurnoCargaPreview();
 
-  $("#btnSalvarTurno").textContent = "Salvar Alterações";
-  $("#btnCancelarEdTurno").classList.remove("hidden");
+  btnSalvarTurno.textContent = "💾 Salvar Alterações";
+  btnCancelarEdTurno.classList.remove("hidden");
+  setTurnoFormDirty(false); // Reset dirty state on edit start
   window.scrollTo(0, 0);
 }
 
 function cancelEditTurno() {
   editingTurnoId = null;
-  $("#turnoNome").value = "";
-  $("#turnoNome").classList.remove('invalid');
+  turnoNomeInput.value = "";
+  turnoNomeInput.classList.remove('invalid');
   selectCor(PALETA_CORES[0]);
-  $("#turnoInicio").value = "";
-  $("#turnoInicio").classList.remove('invalid');
-  $("#turnoFim").value = "";
-  $("#turnoFim").classList.remove('invalid');
-  $("#turnoAlmoco").value = "";
+  turnoInicioInput.value = "";
+  turnoInicioInput.classList.remove('invalid');
+  turnoFimInput.value = "";
+  turnoFimInput.classList.remove('invalid');
+  turnoAlmocoInput.value = "";
   
   $(`#descansoToggleGroup .toggle-btn[data-value="nao"]`).click();
-  $("#turnoDescansoHoras").value = '';
-  $("#turnoDescansoHoras").classList.remove('invalid');
-  $("#turnoDescansoHoras").disabled = true;
+  descansoHorasInput.value = '';
+  descansoHorasInput.classList.remove('invalid');
+  descansoHorasInput.disabled = true;
 
   updateTurnoCargaPreview();
 
-  $("#btnSalvarTurno").textContent = "Salvar Turno";
-  $("#btnSalvarTurno").disabled = false;
-  $("#btnCancelarEdTurno").classList.add("hidden");
+  btnSalvarTurno.textContent = "💾 Salvar Turno";
+  btnSalvarTurno.disabled = false;
+  btnCancelarEdTurno.classList.add("hidden");
+  setTurnoFormDirty(false);
 }
 
 async function deleteTurno(id) {
@@ -294,8 +317,8 @@ async function deleteTurno(id) {
   }
 }
 
-$("#btnSalvarTurno").onclick = saveTurnoFromForm;
-$("#btnCancelarEdTurno").onclick = cancelEditTurno;
+btnSalvarTurno.onclick = saveTurnoFromForm;
+btnCancelarEdTurno.onclick = cancelEditTurno;
 $("#btnLimparTurno").onclick = cancelEditTurno;
 
 renderCorPalette();

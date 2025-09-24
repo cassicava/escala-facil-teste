@@ -5,30 +5,48 @@
 let editingCargoId = null;
 let lastAddedCargoId = null;
 
+// --- Cache de Elementos DOM ---
+const cargoNomeInput = $("#cargoNome");
+const filtroCargosInput = $("#filtroCargos");
+const cargoTurnosContainer = $("#cargoTurnosContainer");
+const cargoDiasContainer = $("#cargoDiasContainer");
+const cargoIs24hInput = $("#cargoIs24h");
+const cargoHorarioInputsContainer = $("#cargoHorarioInputs");
+const cargoInicioInput = $("#cargoInicio");
+const cargoFimInput = $("#cargoFim");
+const cargoRegrasExplicacaoEl = $("#cargoRegrasExplicacao");
+const btnSalvarCargo = $("#btnSalvarCargo");
+const btnCancelarEdCargo = $("#btnCancelarEdCargo");
+const tblCargosBody = $("#tblCargos tbody");
+
+function setCargoFormDirty(isDirty) {
+    dirtyForms.cargos = isDirty;
+}
+
 // --- LÓGICA DO FORMULÁRIO ---
 
-$("#cargoNome").addEventListener("input", (e) => {
+cargoNomeInput.addEventListener("input", (e) => {
   const input = e.target;
   if (input.value.length > 0) {
     input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
   }
   validateInput(input, input.value.trim() !== '');
+  setCargoFormDirty(true);
 });
 
-$("#filtroCargos").addEventListener("input", () => {
+filtroCargosInput.addEventListener("input", () => {
     renderCargos();
 });
 
 function renderTurnosSelects(){
   const { turnos } = store.getState();
-  const container = $("#cargoTurnosContainer");
-  container.innerHTML = '';
+  cargoTurnosContainer.innerHTML = '';
 
   if (turnos.length === 0) {
     const p = document.createElement('p');
     p.className = 'muted';
     p.innerHTML = `Nenhum turno cadastrado. <a href="#" onclick="go('turnos')">Cadastre um turno primeiro</a>.`;
-    container.appendChild(p);
+    cargoTurnosContainer.appendChild(p);
     return;
   }
   
@@ -42,13 +60,13 @@ function renderTurnosSelects(){
         <span class="color-dot" style="background-color: ${t.cor || '#e2e8f0'}"></span>
         ${t.nome} (${t.inicio}-${t.fim})
     `;
-    container.appendChild(lbl);
+    lbl.addEventListener('change', () => setCargoFormDirty(true));
+    cargoTurnosContainer.appendChild(lbl);
   });
 }
 
 function renderDiasSemanaCargo() {
-    const container = $("#cargoDiasContainer");
-    container.innerHTML = '';
+    cargoDiasContainer.innerHTML = '';
     DIAS_SEMANA.forEach(d => {
         const lbl = document.createElement("label");
         lbl.className = "dia-label";
@@ -57,8 +75,12 @@ function renderDiasSemanaCargo() {
             <input type="checkbox" name="cargoDias" value="${d.id}" class="dia-checkbox">
             <span class="dia-abrev">${d.abrev}</span>
         `;
+        container = cargoDiasContainer;
         container.appendChild(lbl);
-        lbl.querySelector('input').addEventListener('change', updateCargoRegrasExplicacao);
+        lbl.querySelector('input').addEventListener('change', () => {
+            updateCargoRegrasExplicacao();
+            setCargoFormDirty(true);
+        });
     });
 }
 
@@ -67,43 +89,42 @@ $$('#cargoHorarioToggle .toggle-btn').forEach(button => {
         $$('#cargoHorarioToggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
         const tipo = button.dataset.value;
-        $("#cargoIs24h").value = tipo;
-        $("#cargoHorarioInputs").classList.toggle('hidden', tipo === '24h');
+        cargoIs24hInput.value = tipo;
+        cargoHorarioInputsContainer.classList.toggle('hidden', tipo === '24h');
         updateCargoRegrasExplicacao();
+        setCargoFormDirty(true);
     };
 });
 
 function updateCargoRegrasExplicacao() {
     const dias = $$('input[name="cargoDias"]:checked').map(chk => DIAS_SEMANA.find(d => d.id === chk.value)?.nome || '');
-    const is24h = $("#cargoIs24h").value === '24h';
-    const inicio = $("#cargoInicio").value;
-    const fim = $("#cargoFim").value;
-    const explicacaoEl = $("#cargoRegrasExplicacao");
+    const is24h = cargoIs24hInput.value === '24h';
+    const inicio = cargoInicioInput.value;
+    const fim = cargoFimInput.value;
 
     let texto = "Este cargo operará ";
     if (dias.length === 0) {
-        explicacaoEl.innerHTML = "Defina os dias e a faixa de horário em que este cargo precisa de cobertura. Isso ajudará o gerador de escala a entender a demanda.";
+        cargoRegrasExplicacaoEl.innerHTML = "Defina os dias e a faixa de horário em que este cargo precisa de cobertura. Isso ajudará o gerador de escala a entender a demanda.";
         return;
     }
     texto += dias.length === 7 ? "todos os dias" : `às ${dias.join(", ")}`;
     texto += is24h ? ", 24 horas por dia." : (inicio && fim ? `, das ${inicio} às ${fim}.` : ".");
-    explicacaoEl.innerHTML = texto;
+    cargoRegrasExplicacaoEl.innerHTML = texto;
 }
 
 // --- RENDERIZAÇÃO DA TABELA ---
 
 function renderCargos(){
   const { cargos, funcionarios, turnos } = store.getState();
-  const filtro = $("#filtroCargos").value.toLowerCase();
+  const filtro = filtroCargosInput.value.toLowerCase();
   
-  const tbody = $("#tblCargos tbody");
-  tbody.innerHTML = "";
+  tblCargosBody.innerHTML = "";
   
   const cargosFiltrados = cargos.filter(c => c.nome.toLowerCase().includes(filtro));
   const cargosOrdenados = [...cargosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (cargosOrdenados.length === 0 && filtro.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4">
+    tblCargosBody.innerHTML = `<tr><td colspan="4">
         <div class="empty-state"><div class="empty-state-icon">🏢</div>
             <h3>Nenhum Cargo Cadastrado</h3>
             <p>Crie cargos e associe turnos a eles para poder cadastrar funcionários.</p>
@@ -131,14 +152,14 @@ function renderCargos(){
         <td>${nomesTurnos}</td>
         <td>${funcionamento}</td>
         <td>
-            <button class="secondary" data-edit="${c.id}">Editar</button>
-            <button class="danger" data-del="${c.id}">Excluir</button>
+            <button class="secondary" data-edit="${c.id}">✏️ Editar</button>
+            <button class="danger" data-del="${c.id}">🔥 Excluir</button>
         </td>`;
-    tbody.appendChild(tr);
+    tblCargosBody.appendChild(tr);
   });
 
   if (lastAddedCargoId) {
-    tbody.querySelector(`tr[data-cargo-id="${lastAddedCargoId}"]`)?.classList.add('new-item');
+    tblCargosBody.querySelector(`tr[data-cargo-id="${lastAddedCargoId}"]`)?.classList.add('new-item');
     lastAddedCargoId = null;
   }
 
@@ -149,12 +170,12 @@ function renderCargos(){
 // --- AÇÕES PRINCIPAIS ---
 
 function saveCargoFromForm() {
-  const nome = $("#cargoNome").value.trim();
+  const nome = cargoNomeInput.value.trim();
   const turnosIds = $$('input[name="cargoTurno"]:checked').map(chk => chk.value);
   
   if (!nome || turnosIds.length === 0) {
     showToast("O nome do cargo e pelo menos um turno são obrigatórios.");
-    if (!nome) $("#cargoNome").classList.add('invalid');
+    if (!nome) cargoNomeInput.classList.add('invalid');
     return;
   }
   
@@ -169,9 +190,9 @@ function saveCargoFromForm() {
       turnosIds,
       regras: {
           dias: $$('input[name="cargoDias"]:checked').map(chk => chk.value),
-          is24h: $("#cargoIs24h").value === '24h',
-          inicio: $("#cargoInicio").value,
-          fim: $("#cargoFim").value,
+          is24h: cargoIs24hInput.value === '24h',
+          inicio: cargoInicioInput.value,
+          fim: cargoFimInput.value,
       }
   };
   
@@ -193,37 +214,39 @@ function editCargoInForm(id) {
   cancelEditCargo();
   editingCargoId = id;
   
-  $("#cargoNome").value = cargo.nome;
+  cargoNomeInput.value = cargo.nome;
   $$('input[name="cargoTurno"]').forEach(chk => chk.checked = (cargo.turnosIds || []).includes(chk.value));
 
   if (cargo.regras) {
       $$('input[name="cargoDias"]').forEach(chk => chk.checked = cargo.regras.dias.includes(chk.value));
       const tipoHorario = cargo.regras.is24h ? '24h' : 'parcial';
       $(`#cargoHorarioToggle .toggle-btn[data-value="${tipoHorario}"]`).click();
-      $("#cargoInicio").value = cargo.regras.inicio || '';
-      $("#cargoFim").value = cargo.regras.fim || '';
+      cargoInicioInput.value = cargo.regras.inicio || '';
+      cargoFimInput.value = cargo.regras.fim || '';
   }
 
   updateCargoRegrasExplicacao();
-  $("#btnSalvarCargo").textContent = "Salvar Alterações";
-  $("#btnCancelarEdCargo").classList.remove("hidden");
+  btnSalvarCargo.textContent = "💾 Salvar Alterações";
+  btnCancelarEdCargo.classList.remove("hidden");
+  setCargoFormDirty(false); // Reset dirty state on edit
   window.scrollTo(0, 0);
 }
 
 function cancelEditCargo() {
   editingCargoId = null;
-  $("#cargoNome").value = "";
-  $("#cargoNome").classList.remove('invalid');
+  cargoNomeInput.value = "";
+  cargoNomeInput.classList.remove('invalid');
   $$('input[name="cargoTurno"]').forEach(chk => chk.checked = false);
   
   $$('input[name="cargoDias"]').forEach(chk => chk.checked = false);
   $(`#cargoHorarioToggle .toggle-btn[data-value="parcial"]`).click();
-  $("#cargoInicio").value = "";
-  $("#cargoFim").value = "";
+  cargoInicioInput.value = "";
+  cargoFimInput.value = "";
   updateCargoRegrasExplicacao();
 
-  $("#btnSalvarCargo").textContent = "Salvar Cargo";
-  $("#btnCancelarEdCargo").classList.add("hidden");
+  btnSalvarCargo.textContent = "💾 Salvar Cargo";
+  btnCancelarEdCargo.classList.add("hidden");
+  setCargoFormDirty(false);
 }
 
 async function deleteCargo(id) {
@@ -239,9 +262,14 @@ async function deleteCargo(id) {
 }
 
 // --- INICIALIZAÇÃO E EVENTOS ---
-$("#btnSalvarCargo").onclick = saveCargoFromForm;
-$("#btnCancelarEdCargo").onclick = cancelEditCargo;
+btnSalvarCargo.onclick = saveCargoFromForm;
+btnCancelarEdCargo.onclick = cancelEditCargo;
 $("#btnLimparCargo").onclick = cancelEditCargo;
-['#cargoInicio', '#cargoFim'].forEach(sel => $(sel).addEventListener('input', updateCargoRegrasExplicacao));
+
+const cargoHorarioInputs = [cargoInicioInput, cargoFimInput];
+cargoHorarioInputs.forEach(sel => sel.addEventListener('input', () => {
+    updateCargoRegrasExplicacao();
+    setCargoFormDirty(true);
+}));
 
 renderDiasSemanaCargo();
