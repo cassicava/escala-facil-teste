@@ -12,6 +12,24 @@ function loadJSON(key, fallback){
   catch { return fallback; }
 }
 
+// --- LOADER: Funções para controlar o indicador de carregamento ---
+function showLoader(message = "Processando...") {
+    const overlay = $("#loader-overlay");
+    if (overlay) {
+        $("#loader-overlay .loader-text").textContent = message;
+        overlay.classList.remove("hidden");
+    }
+}
+
+function hideLoader() {
+    const overlay = $("#loader-overlay");
+    if (overlay) {
+        overlay.classList.add("hidden");
+    }
+}
+// --- FIM DO LOADER ---
+
+
 function validateInput(inputElement, forceValid = false) {
     const isValid = forceValid || inputElement.value.trim() !== '';
     inputElement.classList.toggle('invalid', !isValid);

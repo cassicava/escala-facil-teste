@@ -84,13 +84,21 @@ function renderDiasSemanaCargo() {
     });
 }
 
+// ALTERAÇÃO: Lógica atualizada para controlar a visibilidade do campo de horário
 $$('#cargoHorarioToggle .toggle-btn').forEach(button => {
     button.onclick = () => {
         $$('#cargoHorarioToggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
         const tipo = button.dataset.value;
         cargoIs24hInput.value = tipo;
-        cargoHorarioInputsContainer.classList.toggle('hidden', tipo === '24h');
+        
+        // Usa a classe hidden-height para animar a aparição
+        if (tipo === '24h') {
+            cargoHorarioInputsContainer.classList.add('hidden-height');
+        } else {
+            cargoHorarioInputsContainer.classList.remove('hidden-height');
+        }
+
         updateCargoRegrasExplicacao();
         setCargoFormDirty(true);
     };
@@ -157,7 +165,6 @@ function renderCargos(){
         const tr = document.createElement("tr");
         tr.dataset.cargoId = c.id;
 
-        // Célula Nome
         const tdNome = document.createElement('td');
         tdNome.textContent = c.nome;
         const spanMuted = document.createElement('span');
@@ -165,15 +172,12 @@ function renderCargos(){
         spanMuted.textContent = ` (${numFuncionarios})`;
         tdNome.appendChild(spanMuted);
         
-        // Célula Turnos
         const tdTurnos = document.createElement('td');
         tdTurnos.textContent = nomesTurnos;
 
-        // Célula Funcionamento
         const tdFunc = document.createElement('td');
         tdFunc.textContent = funcionamento;
 
-        // Célula Ações
         const tdAcoes = document.createElement('td');
         const btnEdit = document.createElement('button');
         btnEdit.className = 'secondary';
@@ -258,7 +262,7 @@ function editCargoInForm(id) {
   updateCargoRegrasExplicacao();
   btnSalvarCargo.textContent = "💾 Salvar Alterações";
   btnCancelarEdCargo.classList.remove("hidden");
-  setCargoFormDirty(false); // Reset dirty state on edit
+  setCargoFormDirty(false); 
   window.scrollTo(0, 0);
 }
 
@@ -269,7 +273,8 @@ function cancelEditCargo() {
   $$('input[name="cargoTurno"]').forEach(chk => chk.checked = false);
   
   $$('input[name="cargoDias"]').forEach(chk => chk.checked = false);
-  $(`#cargoHorarioToggle .toggle-btn[data-value="parcial"]`).click();
+  // ALTERAÇÃO: Define o clique no botão "24h" como padrão ao limpar
+  $(`#cargoHorarioToggle .toggle-btn[data-value="24h"]`).click();
   cargoInicioInput.value = "";
   cargoFimInput.value = "";
   updateCargoRegrasExplicacao();

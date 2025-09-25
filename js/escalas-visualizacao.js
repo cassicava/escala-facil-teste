@@ -3,20 +3,55 @@
  **************************************/
 
 /**
- * NOVA FUNÇÃO GENÉRICA: Renderiza uma tabela de escala em um container específico.
+ * NOVO: Renderiza a legenda de turnos para uma escala.
+ * @param {object} escala - O objeto da escala.
+ * @param {HTMLElement} container - O elemento DOM onde a legenda será inserida.
+ */
+function renderEscalaLegend(escala, container) {
+    const { turnos } = store.getState();
+    if (!container) return;
+
+    container.innerHTML = ''; // Limpa a legenda anterior
+
+    const turnosNaEscalaIds = [...new Set(escala.slots.map(s => s.turnoId))];
+    const turnosNaEscala = turnos.filter(t => turnosNaEscalaIds.includes(t.id))
+                                 .sort((a, b) => a.inicio.localeCompare(b.inicio));
+    
+    if (turnosNaEscala.length === 0) {
+        return;
+    }
+
+    const h4 = document.createElement('h4');
+    h4.textContent = 'Legenda:';
+    h4.style.width = '100%';
+    h4.style.marginBottom = '0';
+    container.appendChild(h4);
+
+    turnosNaEscala.forEach(turno => {
+        const item = document.createElement('div');
+        item.className = 'legenda-item';
+        item.innerHTML = `
+            <span class="color-dot" style="background-color: ${turno.cor}"></span>
+            <strong>${turno.sigla}</strong> - ${turno.nome}
+        `;
+        container.appendChild(item);
+    });
+}
+
+
+/**
+ * Função genérica para renderizar a tabela da escala.
  * @param {object} escala - O objeto da escala a ser renderizado.
  * @param {HTMLElement} container - O elemento DOM onde a tabela será inserida.
  * @param {object} options - Opções de configuração.
- * @param {boolean} options.isInteractive - Se as células de turno são clicáveis (para troca).
  */
 function renderGenericEscalaTable(escala, container, options = {}) {
     const { isInteractive = false } = options;
     const { funcionarios, turnos } = store.getState();
 
-    // Filtra apenas funcionários que existem e estão na escala, para evitar erros.
     const funcsDaEscala = [...new Set(escala.slots.map(s => s.assigned).filter(Boolean))]
         .map(funcId => funcionarios.find(f => f.id === funcId))
-        .filter(Boolean) // Garante que funcionários excluídos não quebrem a visualização
+        .filter(Boolean)
         .sort((a, b) => a.nome.localeCompare(b.nome));
 
     const dateRange = dateRangeInclusive(escala.inicio, escala.fim);
@@ -39,7 +74,6 @@ function renderGenericEscalaTable(escala, container, options = {}) {
     funcsDaEscala.forEach(func => {
         tableHTML += `<tr><td>${func.nome}</td>`;
         dateRange.forEach(date => {
-            // Adiciona verificação de segurança para exceções
             const excecoesFunc = escala.excecoes ? escala.excecoes[func.id] : null;
             const folgaDoDia = excecoesFunc?.folgas.find(f => f.date === date);
             
@@ -56,7 +90,7 @@ function renderGenericEscalaTable(escala, container, options = {}) {
                     const turno = turnosMap[slot.turnoId];
                     const cellClass = isInteractive ? 'celula-turno' : 'celula-turno-salva';
                     const dataAttr = isInteractive ? `data-slot-id="${slot.id}"` : '';
-                    tableHTML += `<td class="${cellClass}" style="background-color:${turno.cor}" ${dataAttr}>${turno.nome}</td>`;
+                    tableHTML += `<td class="${cellClass}" style="background-color:${turno.cor}" ${dataAttr} title="${turno.nome}">${turno.sigla}</td>`;
                 } else {
                     tableHTML += `<td></td>`;
                 }
@@ -67,11 +101,10 @@ function renderGenericEscalaTable(escala, container, options = {}) {
     
     tableHTML += `</tbody>`;
 
-    // Apenas adiciona o rodapé se não for uma escala salva (para não mostrar totais incorretos)
     if(isInteractive) {
         tableHTML += `<tfoot>`;
         turnosDoCargo.forEach(turno => {
-            tableHTML += `<tr><td><strong>Total ${turno.nome}</strong></td>`;
+            tableHTML += `<tr><td><strong>Total ${turno.sigla}</strong></td>`;
             dateRange.forEach(date => {
                 const total = escala.slots.filter(s => s.date === date && s.turnoId === turno.id && s.assigned).length;
                 tableHTML += `<td>${total}</td>`;
@@ -109,9 +142,9 @@ function renderResumoDetalhado(escala) {
         if(func.periodoHoras === 'semanal') {
             const periodoDias = dateRangeInclusive(escala.inicio, escala.fim).length;
             metaHoras = (horasContratadasBase / 7) * periodoDias;
-        } else { // mensal - Cálculo Preciso
+        } else {
             const dateRange = dateRangeInclusive(escala.inicio, escala.fim);
-            const mesesNaEscala = {}; // Ex: { '2025-09': 15, '2025-10': 10 }
+            const mesesNaEscala = {};
             
             dateRange.forEach(d => {
                 const mesAno = d.slice(0, 7);
@@ -141,11 +174,12 @@ function renderResumoDetalhado(escala) {
     container.innerHTML = html;
 }
 
-// Função original agora usa a função genérica
 function renderEscalaTable(escala) {
     const container = $("#escalaTabelaWrap");
     renderGenericEscalaTable(escala, container, { isInteractive: true });
     
+    renderEscalaLegend(escala, $("#escalaViewLegenda"));
+
     const turnosVagos = escala.slots.filter(s => !s.assigned).length;
     $("#escalaResumo").innerHTML = `<strong>Resumo:</strong> ${turnosVagos > 0 ? `<span style="color:red;">${turnosVagos} turnos vagos.</span>` : 'Todos os turnos foram preenchidos.'}`;
     
@@ -167,7 +201,6 @@ function showSwapModal(slotId) {
     const funcAtual = funcionarios.find(f => f.id === slot.assigned);
     const diaSemanaId = DIAS_SEMANA[new Date(slot.date + 'T12:00:00').getUTCDay()].id;
 
-    // --- VALIDAÇÃO DE CANDIDATOS MELHORADA ---
     const candidatos = funcionarios.filter(f => {
         if (!f || (funcAtual && f.id === funcAtual.id)) return false;
         if (f.cargoId !== currentEscala.cargoId) return false;
@@ -178,7 +211,6 @@ function showSwapModal(slotId) {
         if (!f.disponibilidade[turno.id]?.includes(diaSemanaId)) return false;
         if (currentEscala.slots.some(s => s.assigned === f.id && s.date === slot.date)) return false;
 
-        // Validar dias consecutivos
         let diasSeguidos = 0;
         for (let i = 1; i <= maxDiasConsecutivos; i++) {
             const checkDate = addDays(slot.date, -i);

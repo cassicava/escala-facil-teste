@@ -28,3 +28,9 @@
         font-size: .9rem;
     }
 }
+
+@media (max-width: 992px) {
+    .grid-3-col {
+        grid-template-columns: 1fr; /* Transforma em 1 coluna em telas menores */
+    }
+}

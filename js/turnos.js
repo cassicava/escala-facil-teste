@@ -3,10 +3,11 @@
  **************************************/
 
 let editingTurnoId = null;
-let lastAddedTurnoId = null; // Para animar a nova linha
+let lastAddedTurnoId = null; 
 
 // --- Cache de Elementos DOM ---
 const turnoNomeInput = $("#turnoNome");
+const turnoSiglaInput = $("#turnoSigla");
 const turnoInicioInput = $("#turnoInicio");
 const turnoFimInput = $("#turnoFim");
 const turnoAlmocoInput = $("#turnoAlmoco");
@@ -15,6 +16,7 @@ const turnoCargaSpan = $("#turnoCarga");
 const turnoViraDiaIndicator = $("#turnoViraDia");
 const descansoToggleButtons = $$('#descansoToggleGroup .toggle-btn');
 const descansoHorasInput = $("#turnoDescansoHoras");
+const descansoHorasGroup = $("#descansoHorasGroup"); // ALTERAÇÃO: Adicionado o grupo
 const descansoHiddenInput = $("#descansoObrigatorioHidden");
 const btnSalvarTurno = $("#btnSalvarTurno");
 const btnCancelarEdTurno = $("#btnCancelarEdTurno");
@@ -31,7 +33,6 @@ function setTurnoFormDirty(isDirty) {
     dirtyForms.turnos = isDirty;
 }
 
-// LÓGICA ATUALIZADA
 descansoToggleButtons.forEach(button => {
     button.onclick = () => {
         descansoToggleButtons.forEach(btn => btn.classList.remove('active'));
@@ -40,37 +41,35 @@ descansoToggleButtons.forEach(button => {
         const valor = button.dataset.value;
         descansoHiddenInput.value = valor;
 
+        // ALTERAÇÃO: Controla a visibilidade do grupo em vez de apenas desabilitar o input
         if (valor === 'sim') {
+            descansoHorasGroup.classList.remove('hidden-height');
             descansoHorasInput.disabled = false;
         } else {
+            descansoHorasGroup.classList.add('hidden-height');
             descansoHorasInput.disabled = true;
             descansoHorasInput.value = '';
-            validateInput(descansoHorasInput, true); // Remove classe de erro
+            validateInput(descansoHorasInput, true);
         }
         setTurnoFormDirty(true);
     };
 });
 
-turnoNomeInput.addEventListener("input", (e) => {
-  const input = e.target;
-  if (input.value.length > 0) {
-    input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
-  }
-  validateInput(input);
-  setTurnoFormDirty(true);
-});
-
-[turnoInicioInput, turnoFimInput, turnoAlmocoInput, descansoHorasInput].forEach(input => {
-    input.addEventListener("input", () => {
+[turnoNomeInput, turnoSiglaInput, turnoInicioInput, turnoFimInput, turnoAlmocoInput, descansoHorasInput].forEach(input => {
+    input.addEventListener("input", (e) => {
+        if (e.target === turnoNomeInput && e.target.value.length > 0) {
+            e.target.value = e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1);
+        }
+        if (e.target === turnoSiglaInput) {
+            e.target.value = e.target.value.toUpperCase();
+        }
         updateTurnoCargaPreview();
-        if (input === descansoHorasInput) validateInput(descansoHorasInput);
+        validateInput(e.target);
         setTurnoFormDirty(true);
     });
 });
 
-filtroTurnosInput.addEventListener("input", () => {
-    renderTurnos();
-});
+filtroTurnosInput.addEventListener("input", () => renderTurnos());
 
 function renderCorPalette() {
     const container = $("#turnoCorPalette");
@@ -113,96 +112,64 @@ function updateTurnoCargaPreview(){
 }
 
 function renderTurnos(){
-    const { turnos } = store.getState();
-    const filtro = filtroTurnosInput.value.toLowerCase();
-    
-    tblTurnosBody.innerHTML = "";
-    
-    const turnosFiltrados = turnos.filter(t => t.nome.toLowerCase().includes(filtro));
-    const turnosOrdenados = [...turnosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
+  const { turnos } = store.getState();
+  const filtro = filtroTurnosInput.value.toLowerCase();
+  
+  tblTurnosBody.innerHTML="";
+  
+  const turnosFiltrados = turnos.filter(t => t.nome.toLowerCase().includes(filtro) || (t.sigla && t.sigla.toLowerCase().includes(filtro)));
+  const turnosOrdenados = [...turnosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
+  const colspan = 9;
 
-    if (turnosOrdenados.length === 0) {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.colSpan = 8;
-        if (filtro.length === 0) {
-            cell.innerHTML = `<div class="empty-state">
-                <div class="empty-state-icon">🕒</div>
-                <h3>Nenhum Turno Cadastrado</h3>
-                <p>Comece a adicionar turnos para poder associá-los aos cargos.</p>
-            </div>`;
-        } else {
-            cell.textContent = `Nenhum turno encontrado com o termo "${filtro}".`;
-            cell.className = 'muted center';
-        }
-        row.appendChild(cell);
-        tblTurnosBody.appendChild(row);
-        return;
-    }
+  if (turnosOrdenados.length === 0) {
+      tblTurnosBody.innerHTML = `<tr><td colspan="${colspan}">
+          <div class="empty-state">
+              <div class="empty-state-icon">🕒</div>
+              <h3>Nenhum Turno Cadastrado</h3>
+              <p>Comece a adicionar turnos para poder associá-los aos cargos.</p>
+          </div>
+      </td></tr>`;
+      return;
+  }
 
-    turnosOrdenados.forEach(t => {
-        const tr = document.createElement("tr");
-        tr.dataset.turnoId = t.id;
-        const descansoTxt = t.descansoObrigatorioHoras ? `${t.descansoObrigatorioHoras}h` : 'NT';
-        const overnightIndicator = t.fim < t.inicio ? ' 🌙' : '';
-        
-        // Células de dados
-        const cells = [
-            `<span class="color-dot" style="background-color: ${t.cor || '#e2e8f0'}"></span>`,
-            t.nome,
-            t.inicio,
-            `${t.fim}${overnightIndicator}`,
-            `${t.almocoMin} min`,
-            minutesToHHMM(t.cargaMin),
-            descansoTxt
-        ];
+  turnosOrdenados.forEach(t=>{
+    const tr=document.createElement("tr");
+    tr.dataset.turnoId = t.id;
+    const descansoTxt = t.descansoObrigatorioHoras ? `${t.descansoObrigatorioHoras}h` : 'NT';
+    const overnightIndicator = t.fim < t.inicio ? ' 🌙' : '';
+    tr.innerHTML=`
+      <td><span class="color-dot" style="background-color: ${t.cor || '#e2e8f0'}"></span></td>
+      <td>${t.nome}</td>
+      <td><strong>${t.sigla || '--'}</strong></td>
+      <td>${t.inicio}</td><td>${t.fim}${overnightIndicator}</td>
+      <td>${t.almocoMin} min</td><td>${minutesToHHMM(t.cargaMin)}</td>
+      <td>${descansoTxt}</td>
+      <td>
+        <button class="secondary" data-edit="${t.id}">✏️ Editar</button>
+        <button class="danger" data-del="${t.id}">🔥 Excluir</button>
+      </td>`;
+    tblTurnosBody.appendChild(tr);
+  });
 
-        cells.forEach(content => {
-            const td = document.createElement('td');
-            td.innerHTML = content;
-            tr.appendChild(td);
-        });
+  if (lastAddedTurnoId) {
+    tblTurnosBody.querySelector(`tr[data-turno-id="${lastAddedTurnoId}"]`)?.classList.add('new-item');
+    lastAddedTurnoId = null;
+  }
 
-        // Célula de ações
-        const tdActions = document.createElement('td');
-        const btnEdit = document.createElement('button');
-        btnEdit.className = 'secondary';
-        btnEdit.innerHTML = '✏️ Editar';
-        btnEdit.onclick = () => editTurnoInForm(t.id);
-
-        const btnDel = document.createElement('button');
-        btnDel.className = 'danger';
-        btnDel.innerHTML = '🔥 Excluir';
-        btnDel.onclick = () => deleteTurno(t.id);
-
-        tdActions.append(btnEdit, btnDel);
-        tr.appendChild(tdActions);
-
-        tblTurnosBody.appendChild(tr);
-    });
-
-    if (lastAddedTurnoId) {
-        const novaLinha = tblTurnosBody.querySelector(`tr[data-turno-id="${lastAddedTurnoId}"]`);
-        if (novaLinha) {
-            novaLinha.classList.add('new-item');
-        }
-        lastAddedTurnoId = null;
-    }
+  $$(`#tblTurnos [data-edit]`).forEach(b=> b.onclick=()=>editTurnoInForm(b.dataset.edit));
+  $$(`#tblTurnos [data-del]`).forEach(b=> b.onclick=()=>deleteTurno(b.dataset.del));
 }
-
 
 function validateTurnoForm() {
     let isValid = true;
-    const descansoObrigatorio = descansoHiddenInput.value === 'sim';
-
     if (!validateInput(turnoNomeInput)) isValid = false;
+    if (!validateInput(turnoSiglaInput)) isValid = false;
     if (!validateInput(turnoInicioInput)) isValid = false;
     if (!validateInput(turnoFimInput)) isValid = false;
     
-    if (descansoObrigatorio && !validateInput(descansoHorasInput)) {
+    if (descansoHiddenInput.value === 'sim' && !validateInput(descansoHorasInput)) {
         isValid = false;
     }
-
     return isValid;
 }
 
@@ -214,9 +181,13 @@ async function saveTurnoFromForm() {
 
   const { turnos } = store.getState();
   const nome = turnoNomeInput.value.trim();
+  const sigla = turnoSiglaInput.value.trim().toUpperCase();
   
   if (turnos.some(t => t.nome.toLowerCase() === nome.toLowerCase() && t.id !== editingTurnoId)) {
       return showToast("Já existe um turno com esse nome.");
+  }
+  if (turnos.some(t => t.sigla && t.sigla.toLowerCase() === sigla.toLowerCase() && t.id !== editingTurnoId)) {
+      return showToast("Já existe um turno com essa sigla.");
   }
   
   const inicio = turnoInicioInput.value;
@@ -226,12 +197,8 @@ async function saveTurnoFromForm() {
       const confirmado = await showConfirm({
           title: "Confirmar Turno Noturno?",
           message: "O horário de término é anterior ao de início. Isso significa que o turno termina no dia seguinte. Deseja continuar?",
-          confirmText: "Sim, continuar",
-          cancelText: "Não, corrigir"
       });
-      if (!confirmado) {
-          return;
-      }
+      if (!confirmado) return;
   }
 
   const almocoMin = Number(turnoAlmocoInput.value || 0);
@@ -240,6 +207,7 @@ async function saveTurnoFromForm() {
   const dadosTurno = {
       id: editingTurnoId || uid(),
       nome, 
+      sigla,
       cor: turnoCorHiddenInput.value, 
       inicio, 
       fim, 
@@ -265,6 +233,7 @@ function editTurnoInForm(id) {
 
   editingTurnoId = id;
   turnoNomeInput.value = turno.nome;
+  turnoSiglaInput.value = turno.sigla || '';
   selectCor(turno.cor || PALETA_CORES[0]);
   turnoInicioInput.value = turno.inicio;
   turnoFimInput.value = turno.fim;
@@ -275,11 +244,8 @@ function editTurnoInForm(id) {
       descansoHorasInput.value = turno.descansoObrigatorioHoras;
   } else {
       $(`#descansoToggleGroup .toggle-btn[data-value="nao"]`).click();
-      descansoHorasInput.value = '';
   }
-
   updateTurnoCargaPreview();
-
   btnSalvarTurno.textContent = "💾 Salvar Alterações";
   btnCancelarEdTurno.classList.remove("hidden");
   setTurnoFormDirty(false);
@@ -289,7 +255,9 @@ function editTurnoInForm(id) {
 function cancelEditTurno() {
   editingTurnoId = null;
   turnoNomeInput.value = "";
+  turnoSiglaInput.value = "";
   turnoNomeInput.classList.remove('invalid');
+  turnoSiglaInput.classList.remove('invalid');
   selectCor(PALETA_CORES[0]);
   turnoInicioInput.value = "";
   turnoInicioInput.classList.remove('invalid');
@@ -298,24 +266,16 @@ function cancelEditTurno() {
   turnoAlmocoInput.value = "";
   
   $(`#descansoToggleGroup .toggle-btn[data-value="nao"]`).click();
-  descansoHorasInput.value = '';
-  descansoHorasInput.classList.remove('invalid');
-  descansoHorasInput.disabled = true;
-
+  
   updateTurnoCargaPreview();
 
   btnSalvarTurno.textContent = "💾 Salvar Turno";
-  btnSalvarTurno.disabled = false;
   btnCancelarEdTurno.classList.add("hidden");
   setTurnoFormDirty(false);
 }
 
 function deleteTurno(id) {
-    handleDeleteItem({
-        id: id,
-        itemName: 'Turno',
-        dispatchAction: 'DELETE_TURNO'
-    });
+    handleDeleteItem({ id: id, itemName: 'Turno', dispatchAction: 'DELETE_TURNO' });
 }
 
 btnSalvarTurno.onclick = saveTurnoFromForm;

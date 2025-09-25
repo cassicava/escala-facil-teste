@@ -137,11 +137,23 @@
       </div>
     </section>
 
-    <section id="page-turnos" class="page">
+ <section id="page-turnos" class="page">
         <h1>🕒 Turnos</h1>
         <div class="card">
           <h2>Criar / Editar</h2>
-          <div class="form-row"><label>Nome <input id="turnoNome" type="text" placeholder="Nome do turno (ex.: Manhã)" /></label></div>
+          
+          <div class="turno-header-grid">
+              <label>Nome do Turno
+                  <input id="turnoNome" type="text" placeholder="Ex.: Manhã" style="width: 100%;" />
+              </label>
+              <label>Sigla
+                  <input id="turnoSigla" type="text" placeholder="M1" maxlength="2" style="width: 100%;" />
+              </label>
+              <div class="explanation-box" style="margin: 0;">
+                  Use uma sigla de 2 letras para compactar a escala.
+              </div>
+          </div>
+
           <div class="form-row"><div id="turnoCorContainer"><label>Cor</label><div id="turnoCorPalette" class="color-palette"></div><input type="hidden" id="turnoCorHidden" value="#e2e8f0"></div></div>
           <div class="form-row form-row-vcenter">
               <label>Início <input id="turnoInicio" type="time" /></label>
@@ -163,7 +175,7 @@
                           <button type="button" class="toggle-btn" data-value="sim">Sim</button>
                           <input type="hidden" id="descansoObrigatorioHidden" value="nao">
                       </div>
-                      <div id="descansoHorasGroup" style="width: 100%;">
+                      <div id="descansoHorasGroup" class="expandable-content hidden-height" style="width: 100%;">
                           <label>Horas de Descanso</label>
                           <input type="number" id="turnoDescansoHoras" min="1" placeholder="Ex: 36" disabled style="width: 100%;">
                       </div>
@@ -185,13 +197,13 @@
           <div class="form-row"><input type="search" id="filtroTurnos" placeholder="🔎 Buscar turno..." style="width: 100%;"/></div>
           <table class="table" id="tblTurnos">
             <thead>
-              <tr><th>Cor</th><th>Nome</th><th>Início</th><th>Fim</th><th>Almoço</th><th>Carga</th><th>Descanso</th><th>Ações</th></tr>
+              <tr><th>Cor</th><th>Nome</th><th>Sigla</th><th>Início</th><th>Fim</th><th>Almoço</th><th>Carga</th><th>Descanso</th><th>Ações</th></tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
       </section>
-  
+
       <section id="page-cargos" class="page">
           <h1>🏢 Cargos</h1>
           <div class="card">
@@ -213,11 +225,11 @@
                         <label class="form-label">Horário de operação:</label>
                         <div class="form-row-aligned">
                            <div class="toggle-group" id="cargoHorarioToggle">
-                                <button type="button" class="toggle-btn active" data-value="parcial">Horário Definido</button>
-                                <button type="button" class="toggle-btn" data-value="24h">24 Horas</button>
-                                <input type="hidden" id="cargoIs24h" value="parcial">
+                                <button type="button" class="toggle-btn active" data-value="24h">24 Horas</button>
+                                <button type="button" class="toggle-btn" data-value="parcial">Horário Definido</button>
+                                <input type="hidden" id="cargoIs24h" value="24h">
                             </div>
-                            <div id="cargoHorarioInputs" class="form-row">
+                            <div id="cargoHorarioInputs" class="form-row expandable-content hidden-height">
                                 <label>Início <input id="cargoInicio" type="time" /></label>
                                 <label>Fim <input id="cargoFim" type="time" /></label>
                             </div>
@@ -246,89 +258,88 @@
       </section>
   
       <section id="page-funcionarios" class="page">
-        <h1>👤 Funcionários</h1>
-        <div class="card">
-          <h2>Criar / Editar</h2>
-          
-          <div class="form-row">
-            <label class="form-field-half">Nome Completo <input id="funcNome" type="text" placeholder="Nome do funcionário" /></label>
-            <label>Documento <input id="funcDocumento" type="text" placeholder="Opcional (Ex: CRM 12345)" /></label>
-          </div>
-  
-          <div class="form-row">
-            <label class="form-field-half">Cargo<select id="funcCargo"></select></label>
-          </div>
-  
-          <fieldset class="form-section">
-            <legend>Detalhes do Contrato</legend>
-            <div class="form-section-column">
-                <div class="form-section-header">
-                    <label>Tipo de Contrato</label>
-                </div>
-                <div class="toggle-group" id="contratoToggleGroup">
-                    <button type="button" class="toggle-btn active" data-value="clt">CLT / Concursado</button>
-                    <button type="button" class="toggle-btn" data-value="pj">Prestador de Serviço</button>
-                    <input type="hidden" id="funcContrato" value="clt">
-                </div>
-                <div id="contratoExplicacao" class="explanation-box">
-                    Funcionários <strong>CLT / Concursados</strong> seguirão rigorosamente as regras de descanso obrigatório cadastradas nos turnos.
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="form-section-header">
-                  <label>Período da Carga Horária</label>
-                </div>
-                <div class="toggle-group" id="periodoHorasToggleGroup">
-                    <button type="button" class="toggle-btn active" data-value="semanal">Semanal</button>
-                    <button type="button" class="toggle-btn" data-value="mensal">Mensal</button>
-                    <input type="hidden" id="funcPeriodoHoras" value="semanal">
-                </div>
-                <label style="margin-top: 12px;">Carga Horária (em horas)</label>
-                <input id="funcCargaHoraria" type="number" placeholder="Ex: 44" min="1"/>
-            </div>
-          </fieldset>
+      <h1>👤 Funcionários</h1>
+      <div class="card">
+        <h2>Criar / Editar</h2>
+        
+        <div class="form-row">
+          <label class="form-field-half">Nome Completo <input id="funcNome" type="text" placeholder="Nome do funcionário" /></label>
+          <label>Documento <input id="funcDocumento" type="text" placeholder="Opcional (Ex: CRM 12345)" /></label>
+        </div>
 
-          <fieldset>
-            <legend>Opções Avançadas</legend>
-            <div class="form-section-column">
-                <div class="form-section-header">
-                    <label>Faz Hora Extra?</label>
+        <div class="form-row">
+          <label class="form-field-half">Cargo<select id="funcCargo"></select></label>
+        </div>
+
+        <fieldset>
+            <legend>Detalhes do Contrato e Carga Horária</legend>
+            <div class="grid-3-col">
+                <div class="form-section-column">
+                    <div class="form-section-header">
+                        <label>Tipo de Contrato</label>
+                    </div>
+                    <div class="toggle-group" id="contratoToggleGroup">
+                        <button type="button" class="toggle-btn active" data-value="clt">CLT / Concursado</button>
+                        <button type="button" class="toggle-btn" data-value="pj">Prestador de Serviço</button>
+                        <input type="hidden" id="funcContrato" value="clt">
+                    </div>
+                    <div id="contratoExplicacao" class="explanation-box">
+                        Funcionários <strong>CLT / Concursados</strong> seguirão rigorosamente as regras de descanso obrigatório.
+                    </div>
                 </div>
-                <div class="toggle-group" id="horaExtraToggleGroup">
-                    <button type="button" class="toggle-btn active" data-value="nao">Não</button>
-                    <button type="button" class="toggle-btn" data-value="sim">Sim</button>
-                    <input type="hidden" id="funcHoraExtra" value="nao">
+                <div class="form-section-column">
+                    <div class="form-section-header">
+                      <label>Período da Carga Horária</label>
+                    </div>
+                    <div class="toggle-group" id="periodoHorasToggleGroup">
+                        <button type="button" class="toggle-btn active" data-value="semanal">Semanal</button>
+                        <button type="button" class="toggle-btn" data-value="mensal">Mensal</button>
+                        <input type="hidden" id="funcPeriodoHoras" value="semanal">
+                    </div>
+                    <label style="margin-top: 4px;">Carga Horária (em horas)
+                        <input id="funcCargaHoraria" type="number" placeholder="Ex: 44" min="1" style="width: 100%;"/>
+                    </label>
                 </div>
-                <div class="explanation-box">
-                    Se habilitado, o algoritmo poderá escalar este funcionário além de sua carga horária para cobrir turnos vagos.
+                <div class="form-section-column">
+                    <div class="form-section-header">
+                        <label>Faz Hora Extra?</label>
+                    </div>
+                    <div class="toggle-group" id="horaExtraToggleGroup">
+                        <button type="button" class="toggle-btn active" data-value="nao">Não</button>
+                        <button type="button" class="toggle-btn" data-value="sim">Sim</button>
+                        <input type="hidden" id="funcHoraExtra" value="nao">
+                    </div>
+                    <div class="explanation-box">
+                        Se habilitado, o algoritmo poderá escalar este funcionário além de sua carga horária.
+                    </div>
                 </div>
             </div>
-          </fieldset>
-  
-          <fieldset id="funcTurnosFieldset">
-              <legend>Disponibilidade de Turnos</legend>
-              <div id="funcTurnosContainer" class="turno-disponibilidade-grid">
-                  <div class="turno-placeholder">
-                      <p>Selecione um cargo para ver os turnos disponíveis.</p>
-                  </div>
-              </div>
-          </fieldset>
-  
-          <div class="form-row">
-            <button id="btnSalvarFunc" class="primary">💾 Salvar Funcionário</button>
-            <button id="btnCancelarEdFunc" class="secondary hidden">Cancelar Edição</button>
-            <button id="btnLimparFunc" class="secondary ml-auto">🗑️ Limpar</button>
-          </div>
+        </fieldset>
+
+        <fieldset id="funcTurnosFieldset">
+            <legend>Disponibilidade de Turnos</legend>
+            <div id="funcTurnosContainer" class="turno-disponibilidade-grid">
+                <div class="turno-placeholder">
+                    <p>Selecione um cargo para ver os turnos disponíveis.</p>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-row">
+          <button id="btnSalvarFunc" class="primary">💾 Salvar Funcionário</button>
+          <button id="btnCancelarEdFunc" class="secondary hidden">Cancelar Edição</button>
+          <button id="btnLimparFunc" class="secondary ml-auto">🗑️ Limpar</button>
         </div>
-        <div class="card card-lista">
-          <h2>Funcionários Cadastrados</h2>
-          <div class="form-row"><input type="search" id="filtroFuncionarios" placeholder="🔎 Buscar funcionário..." style="width: 100%;"/></div>
-          <table class="table" id="tblFuncionarios">
-              <thead><tr><th>Nome</th><th>Documento</th><th>Contrato</th><th>Carga Horária</th><th>H. Extra</th><th>Turnos</th><th>Ações</th></tr></thead>
-              <tbody></tbody>
-          </table>
-        </div>
-      </section>
+      </div>
+      <div class="card card-lista">
+        <h2>Funcionários Cadastrados</h2>
+        <div class="form-row"><input type="search" id="filtroFuncionarios" placeholder="🔎 Buscar funcionário..." style="width: 100%;"/></div>
+        <table class="table" id="tblFuncionarios">
+            <thead><tr><th>Nome</th><th>Documento</th><th>Contrato</th><th>Carga Horária</th><th>H. Extra</th><th>Turnos</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
     <section id="page-gerar-escala" class="page">
         <h1>Gerar Nova Escala</h1>
@@ -458,6 +469,7 @@
                 <button id="btnVoltarPasso3" class="secondary button-voltar">< Voltar para Ajustes</button>
                 <h2 id="escalaViewTitle">Visualização da Escala</h2>
                 <p id="escalaResumo" class="muted" style="margin-top: 16px;"></p>
+                <div id="escalaViewLegenda" class="escala-legenda"></div>
             </div>
             
             <div class="card card-lista">
@@ -489,6 +501,7 @@
                 <button id="btnVoltarParaLista" class="secondary button-voltar">< Voltar para a Lista</button>
                 <h2 id="escalaSalvaViewTitle">Visualização da Escala</h2>
                 <p id="escalaSalvaResumo" class="muted" style="margin-top: 16px;"></p>
+                <div id="escalaSalvaViewLegenda" class="escala-legenda"></div>
              </div>
              <div class="card card-lista">
                 <div id="escalaSalvaTabelaWrap">
@@ -549,6 +562,11 @@
 
   <div id="toast" class="toast hidden">
     <p id="toastMessage"></p>
+  </div>
+
+  <div id="loader-overlay" class="hidden">
+      <div class="loader-spinner"></div>
+      <p class="loader-text">Gerando escala...</p>
   </div>
   
   <script src="js/constants.js"></script>

@@ -316,3 +316,30 @@ html[data-theme="dark"] .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     margin-bottom: 0;
     padding-bottom: 0;
 }
+
+/* --- NOVOS ESTILOS PARA A LEGENDA DA ESCALA --- */
+.escala-legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+.legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--bg);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+.legenda-item .color-dot {
+    width: 14px;
+    height: 14px;
+}
+.legenda-item strong {
+    color: var(--brand);
+}

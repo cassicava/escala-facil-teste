@@ -46,12 +46,13 @@ function verEscalaSalva(id) {
         const container = $("#escalaSalvaTabelaWrap");
         renderGenericEscalaTable(escala, container, { isInteractive: false });
         
-        // Atualiza os resumos
+        // Renderiza a legenda para a escala salva
+        renderEscalaLegend(escala, $("#escalaSalvaViewLegenda"));
+        
         const turnosVagos = escala.slots.filter(s => !s.assigned).length;
         $("#escalaSalvaResumo").innerHTML = `<strong>Resumo:</strong> ${turnosVagos > 0 ? `<span style="color:red;">${turnosVagos} turnos vagos.</span>` : 'Todos os turnos foram preenchidos.'}`;
         $("#escalaSalvaViewTitle").textContent = escala.nome || 'Visualização da Escala';
 
-        // Mostra a view correta
         $('#lista-escalas-container').classList.add('hidden');
         $('#escalaSalvaView').classList.remove('hidden');
     }
