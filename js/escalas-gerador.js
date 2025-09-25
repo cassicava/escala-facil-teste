@@ -5,7 +5,14 @@
 function gerarEscala() {
     const { cargos, funcionarios, turnos } = store.getState();
     const { cargoId, inicio, fim, cobertura, excecoes, maxDiasConsecutivos, minFolgasFimSemana, feriados, otimizarFolgas } = geradorState;
+
+    // Guarda de segurança para o Erro 1
     const cargo = cargos.find(c => c.id === cargoId);
+    if (!cargo) {
+        showToast("Erro: O cargo selecionado para a escala não foi encontrado. Por favor, reinicie.");
+        return;
+    }
+
     const funcs = funcionarios.filter(f => f.cargoId === cargoId);
     const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
     
@@ -18,7 +25,6 @@ function gerarEscala() {
             ...funcExcecoes.folgas.map(folga => folga.date)
         ]);
         
-        // Adiciona o período de carência (corrigido para não ser escalado)
         const adicionarCarencia = (excecao) => {
             if (excecao.dates.length > 0) {
                 const ultimaData = excecao.dates[excecao.dates.length - 1];
@@ -42,19 +48,22 @@ function gerarEscala() {
 
     const dateRange = dateRangeInclusive(inicio, fim);
     
-    // --- LÓGICA DE FIM DE SEMANA APRIMORADA ---
+    // --- LÓGICA DE FIM DE SEMANA CORRIGIDA ---
     const totalFinsDeSemanaNoPeriodo = new Set();
+    const mesesNoPeriodo = new Set(); // Guarda os meses únicos (ex: "2025-09")
     dateRange.forEach(date => {
         const d = new Date(date + 'T12:00:00');
+        mesesNoPeriodo.add(date.substring(0, 7)); // Adiciona "YYYY-MM" ao Set
         if (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
             const semanaId = getWeekNumber(d);
             const mesAno = d.toISOString().substring(0, 7);
             totalFinsDeSemanaNoPeriodo.add(`${mesAno}-${semanaId}`);
         }
     });
-    const totalMesesAproximado = Math.max(1, (dateRange.length / 30.44));
-    const minFolgasFdsExigidas = Math.floor(minFolgasFimSemana * totalMesesAproximado);
-    // --- FIM DA LÓGICA DE FIM DE SEMANA ---
+    
+    const totalMesesExatos = mesesNoPeriodo.size;
+    const minFolgasFdsExigidas = Math.floor(minFolgasFimSemana * totalMesesExatos);
+    // --- FIM DA CORREÇÃO ---
     
     let slots = [];
     dateRange.forEach(date => {
@@ -96,7 +105,6 @@ function gerarEscala() {
 
             const candidatos = funcs
                 .map(f => {
-                    // Validações Rígidas (Exclusão)
                     if (excecoesMap[f.id].has(slot.date)) return null; 
                     if (!f.disponibilidade[turno.id]?.includes(diaSemanaId)) return null;
                     if (slots.some(s => s.assigned === f.id && s.date === slot.date)) return null;
@@ -116,7 +124,6 @@ function gerarEscala() {
                     if (!usarHoraExtra && (historico[f.id].horasTrabalhadas / 60) >= maxHoras) return null;
                     if (usarHoraExtra && !f.fazHoraExtra) return null;
 
-                    // Validação de Fim de Semana
                     const d = new Date(slot.date + 'T12:00:00');
                     if (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
                         const fdsTrabalhados = finsDeSemanaTrabalhados[f.id].size;
@@ -125,21 +132,17 @@ function gerarEscala() {
                         }
                     }
 
-                    // --- CÁLCULO DE PONTUAÇÃO (QUANTO MENOR, MELHOR) ---
                     let score = 0;
-                    // Penalidade por horas trabalhadas (proporcional)
                     score += (historico[f.id].horasTrabalhadas / 60) / maxHoras * 100;
-                    // Penalidade por dias consecutivos
                     score += (diasConsecutivos / maxDiasConsecutivos) * 50;
-                    // Penalidade se trabalhou no dia anterior (para otimizar folgas)
                     if(otimizarFolgas && diasConsecutivos > 0) {
                         score += 25;
                     }
 
                     return { func: f, score };
                 })
-                .filter(Boolean) // Remove candidatos nulos (inválidos)
-                .sort((a, b) => a.score - b.score); // Ordena pelo score (menor primeiro)
+                .filter(Boolean)
+                .sort((a, b) => a.score - b.score);
 
             if (candidatos.length > 0) {
                 const escolhido = candidatos[0].func;

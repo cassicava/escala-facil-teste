@@ -90,6 +90,18 @@ async function go(page) {
 function renderAll() {
     console.log("Estado atualizado. Re-renderizando componentes...");
     
+    const { cargos } = store.getState();
+
+    // --- ADIÇÃO: Verificação de segurança para o gerador de escala ---
+    // Se o cargo selecionado no gerador foi excluído, reseta o assistente para evitar erros.
+    if (geradorState.cargoId && !cargos.some(c => c.id === geradorState.cargoId)) {
+        console.warn("Cargo selecionado no gerador não existe mais. Resetando o assistente.");
+        resetGeradorEscala();
+        if ($("#page-gerar-escala").classList.contains('active')) {
+            showToast("O cargo selecionado foi excluído. Por favor, comece novamente.");
+        }
+    }
+    
     renderTurnos();
     renderCargos();
     renderFuncs();
@@ -97,8 +109,6 @@ function renderAll() {
     
     renderTurnosSelects();
     renderFuncCargoSelect();
-    
-    // LINHA CORRIGIDA: Garante que a lista de cargos na tela de gerar escala seja sempre atual.
     renderEscCargoSelect();
     
     loadConfigForm();
@@ -106,18 +116,31 @@ function renderAll() {
 }
 
 
-function init() {
-  store.dispatch('LOAD_STATE');
-  store.subscribe(renderAll);
+function initMainApp() {
+    console.log("Iniciando aplicação principal...");
+    store.subscribe(renderAll);
   
-  const { config } = store.getState();
-  applyTheme(config.theme || 'light');
+    const { config } = store.getState();
+    applyTheme(config.theme || 'light');
   
-  renderAll();
-  go("home");
+    renderAll();
+    go("home");
+
+    $$(".tab-btn").forEach(b => b.onclick = () => go(b.dataset.page));
+    $$(".home-card").forEach(c => c.onclick = () => go(c.dataset.goto));
 }
 
-$$(".tab-btn").forEach(b => b.onclick = () => go(b.dataset.page));
-$$(".home-card").forEach(c => c.onclick = () => go(c.dataset.goto));
+
+function init() {
+    store.dispatch('LOAD_STATE');
+    const onboardingComplete = localStorage.getItem('ge_onboarding_complete') === 'true';
+
+    if (!onboardingComplete) {
+        initWelcomeScreen();
+    } else {
+        initMainApp();
+    }
+}
+
 
 document.addEventListener("DOMContentLoaded", init);

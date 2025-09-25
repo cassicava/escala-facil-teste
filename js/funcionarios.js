@@ -189,16 +189,41 @@ funcCargoSelect.addEventListener("change", (e) => {
 filtroFuncionariosInput.addEventListener("input", () => { renderFuncs(); });
 
 function renderFuncCargoSelect(){
-  const { cargos } = store.getState();
-  funcCargoSelect.innerHTML="<option value=''>Selecione um cargo</option>";
-  const cargosOrdenados = [...cargos].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
-  cargosOrdenados.forEach(c=>{
-    const o=document.createElement("option");
-    o.value=c.id;
-    o.textContent=c.nome;
-    funcCargoSelect.appendChild(o);
-  });
+    const { cargos } = store.getState();
+    funcCargoSelect.innerHTML = "<option value=''>Selecione um cargo</option>";
+
+    // --- MELHORIA DE UX ---
+    // Se não houver cargos, exibe uma mensagem útil.
+    if (cargos.length === 0) {
+        const fieldset = funcCargoSelect.closest('label');
+        if (fieldset) {
+            let p = fieldset.querySelector('.muted-link-helper');
+            if (!p) {
+                p = document.createElement('p');
+                p.className = 'muted-link-helper muted';
+                p.style.marginTop = '8px';
+                fieldset.appendChild(p);
+            }
+            p.innerHTML = `Nenhum cargo cadastrado. <a href="#" onclick="go('cargos')">Cadastre um cargo primeiro</a>.`;
+        }
+        return;
+    }
+
+    // Remove a mensagem de ajuda se ela existir e houver cargos.
+    const fieldset = funcCargoSelect.closest('label');
+    const p = fieldset?.querySelector('.muted-link-helper');
+    if (p) p.remove();
+    // --- FIM DA MELHORIA ---
+
+    const cargosOrdenados = [...cargos].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+    cargosOrdenados.forEach(c => {
+        const o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = c.nome;
+        funcCargoSelect.appendChild(o);
+    });
 }
+
 
 function renderFuncs(){
   const { funcionarios, cargos, turnos } = store.getState();
@@ -210,9 +235,17 @@ function renderFuncs(){
   const colspan = 7;
 
   if (funcsFiltrados.length === 0) {
-    tblFuncionariosBody.innerHTML = funcionarios.length === 0 
-        ? `<tr><td colspan="${colspan}"><div class="empty-state"><div class="empty-state-icon">👤</div><h3>Nenhum Funcionário Cadastrado</h3><p>Comece a cadastrar funcionários para poder gerar escalas.</p></div></td></tr>`
-        : `<tr><td colspan="${colspan}" class="muted center">Nenhum funcionário encontrado com o termo "${filtro}".</td></tr>`;
+    const emptyRow = document.createElement('tr');
+    const emptyCell = document.createElement('td');
+    emptyCell.colSpan = colspan;
+    if (funcionarios.length === 0) {
+        emptyCell.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👤</div><h3>Nenhum Funcionário Cadastrado</h3><p>Comece a cadastrar funcionários para poder gerar escalas.</p></div>`;
+    } else {
+        emptyCell.textContent = `Nenhum funcionário encontrado com o termo "${filtro}".`;
+        emptyCell.className = 'muted center';
+    }
+    emptyRow.appendChild(emptyCell);
+    tblFuncionariosBody.appendChild(emptyRow);
     return;
   }
   
@@ -230,7 +263,14 @@ function renderFuncs(){
   
   for (const cargoNome of cargosOrdenados) {
       const funcsDoGrupo = agrupados[cargoNome].sort((a,b) => a.nome.localeCompare(b.nome));
-      tblFuncionariosBody.innerHTML += `<th colspan="${colspan}" class="group-header ${cargoNome === SEM_CARGO_DEFINIDO ? 'warning' : ''}">${cargoNome}</th>`;
+      
+      const headerRow = document.createElement('tr');
+      const headerCell = document.createElement('th');
+      headerCell.colSpan = colspan;
+      headerCell.className = `group-header ${cargoNome === SEM_CARGO_DEFINIDO ? 'warning' : ''}`;
+      headerCell.textContent = cargoNome;
+      headerRow.appendChild(headerCell);
+      tblFuncionariosBody.appendChild(headerRow);
       
       funcsDoGrupo.forEach(f => {
           const nomesTurnos = Object.keys(f.disponibilidade || {}).map(id => turnosMap[id]?.nome || "").join(", ") || "Nenhum";
@@ -240,6 +280,7 @@ function renderFuncs(){
           
           const row = document.createElement('tr');
           row.dataset.funcId = f.id;
+
           row.innerHTML = `
             <td>${f.nome}</td>
             <td>${f.documento || '---'}</td>
@@ -247,11 +288,22 @@ function renderFuncs(){
             <td>${cargaHoraria}</td>
             <td>${horaExtra}</td>
             <td>${nomesTurnos}</td>
-            <td>
-              <button class="secondary" data-edit="${f.id}">✏️ Editar</button>
-              <button class="danger" data-del="${f.id}">🔥 Excluir</button>
-            </td>
           `;
+
+          const actionsCell = document.createElement('td');
+          const editButton = document.createElement('button');
+          editButton.className = 'secondary';
+          editButton.innerHTML = '✏️ Editar';
+          editButton.onclick = () => editFuncInForm(f.id);
+
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'danger';
+          deleteButton.innerHTML = '🔥 Excluir';
+          deleteButton.onclick = () => deleteFuncionario(f.id);
+
+          actionsCell.append(editButton, deleteButton);
+          row.appendChild(actionsCell);
+
           tblFuncionariosBody.appendChild(row);
       });
   }
@@ -260,9 +312,8 @@ function renderFuncs(){
     tblFuncionariosBody.querySelector(`tr[data-func-id="${lastAddedFuncId}"]`)?.classList.add('new-item');
     lastAddedFuncId = null;
   }
-  $$(`#tblFuncionarios [data-edit]`).forEach(b=> b.onclick=()=>editFuncInForm(b.dataset.edit));
-  $$(`#tblFuncionarios [data-del]`).forEach(b=> b.onclick=()=>deleteFuncionario(b.dataset.del));
 }
+
 
 function validateFuncForm() {
     const isNomeValid = validateInput(funcNomeInput);
@@ -358,8 +409,6 @@ function cancelEditFunc() {
   setFuncFormDirty(false);
 }
 
-// --- ALTERAÇÃO ---
-// A lógica de exclusão agora usa a função genérica de utils.js
 function deleteFuncionario(id) {
     handleDeleteItem({
         id: id,

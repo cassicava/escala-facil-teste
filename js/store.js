@@ -107,8 +107,12 @@ const store = {
             state.cargos = state.cargos.filter(c => c.id !== cargoId);
             // Lógica cascata: remove o cargo dos funcionários
             state.funcionarios.forEach(f => { if (f.cargoId === cargoId) f.cargoId = null; });
+            // Lógica cascata: remove as escalas salvas associadas ao cargo
+            state.escalas = state.escalas.filter(e => e.cargoId !== cargoId);
+            
             saveJSON(KEYS.cargos, state.cargos);
             saveJSON(KEYS.funcs, state.funcionarios);
+            saveJSON(KEYS.escalas, state.escalas);
         },
 
         SAVE_FUNCIONARIO(state, func) {

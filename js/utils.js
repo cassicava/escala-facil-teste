@@ -12,8 +12,6 @@ function loadJSON(key, fallback){
   catch { return fallback; }
 }
 
-// --- ADIÇÃO ---
-// Função de validação de input centralizada.
 function validateInput(inputElement, forceValid = false) {
     const isValid = forceValid || inputElement.value.trim() !== '';
     inputElement.classList.toggle('invalid', !isValid);
@@ -73,77 +71,123 @@ function showToast(message) {
     }, 3000);
 }
 
+
+// --- FUNÇÃO CORRIGIDA ---
 function showConfirm({ title, message, confirmText = "Confirmar", cancelText = "Cancelar" }) {
     return new Promise((resolve) => {
         const backdrop = $("#modalBackdrop");
+        const modalConfirmBtn = $("#modalConfirm");
+        const modalCancelBtn = $("#modalCancel");
+
         $("#modalTitle").textContent = title;
-        $("#modalMessage").innerHTML = `<p>${message}</p>`; // Garante que a mensagem seja um parágrafo
-        $("#modalConfirm").textContent = confirmText;
-        $("#modalCancel").textContent = cancelText;
+        $("#modalMessage").innerHTML = `<p>${message}</p>`;
+        modalConfirmBtn.textContent = confirmText;
+        modalCancelBtn.textContent = cancelText;
         
-        $("#modalConfirm").style.display = 'inline-flex';
-        $("#modalCancel").textContent = cancelText;
+        modalConfirmBtn.style.display = 'inline-flex';
+        modalCancelBtn.style.display = 'inline-flex';
 
         backdrop.classList.remove("hidden");
+
+        const cleanup = () => {
+            modalConfirmBtn.removeEventListener('click', confirmHandler);
+            modalCancelBtn.removeEventListener('click', cancelHandler);
+            $("#modalMessage").innerHTML = '';
+        };
 
         const confirmHandler = () => {
             backdrop.classList.add("hidden");
             resolve(true);
-            cleanup();
+            cleanup(); // A chamada para cleanup() foi adicionada aqui
         };
 
         const cancelHandler = () => {
             backdrop.classList.add("hidden");
             resolve(false);
-            cleanup();
+            cleanup(); // E aqui também, garantindo a limpeza
         };
-
-        const cleanup = () => {
-            $("#modalConfirm").removeEventListener('click', confirmHandler);
-            $("#modalCancel").removeEventListener('click', cancelHandler);
-        };
-
-        $("#modalConfirm").addEventListener('click', confirmHandler);
-        $("#modalCancel").addEventListener('click', cancelHandler);
+        
+        modalConfirmBtn.addEventListener('click', confirmHandler);
+        modalCancelBtn.addEventListener('click', cancelHandler);
     });
 }
 
-/**
- * NOVO MODAL: Exibe um modal com um título, conteúdo HTML e apenas um botão de fechar.
- * @param {object} options
- * @param {string} options.title - O título do modal.
- * @param {string} options.contentHTML - O conteúdo em HTML para exibir no corpo do modal.
- */
+
 function showInfoModal({ title, contentHTML }) {
     const backdrop = $("#modalBackdrop");
-    $("#modalTitle").textContent = title;
-    $("#modalMessage").innerHTML = contentHTML; // Usa innerHTML para renderizar o texto formatado
+    const modalCancelBtn = $("#modalCancel");
 
-    // Esconde o botão de confirmar e ajusta o botão de cancelar para ser "Fechar"
+    $("#modalTitle").textContent = title;
+    $("#modalMessage").innerHTML = contentHTML;
+
     $("#modalConfirm").style.display = 'none';
-    $("#modalCancel").textContent = "Fechar";
+    modalCancelBtn.textContent = "Fechar";
+    modalCancelBtn.style.display = 'inline-flex';
+
 
     backdrop.classList.remove("hidden");
 
     const closeHandler = () => {
         backdrop.classList.add("hidden");
-        $("#modalCancel").removeEventListener('click', closeHandler);
-         // Restaura a visibilidade do botão de confirmar para o showConfirm funcionar
+        modalCancelBtn.removeEventListener('click', closeHandler);
         $("#modalConfirm").style.display = 'inline-flex';
+        $("#modalMessage").innerHTML = '';
     };
 
-    $("#modalCancel").addEventListener('click', closeHandler);
+    modalCancelBtn.addEventListener('click', closeHandler);
 }
 
-// --- ADIÇÃO ---
-/**
- * Função genérica para lidar com a exclusão de itens (Turno, Cargo, Funcionário).
- * Exibe um modal de confirmação e, se confirmado, despacha a ação para o store.
- * @param {object} params
- * @param {string} params.id - O ID do item a ser excluído.
- * @param {string} params.itemName - O nome do tipo de item (ex: 'Turno', 'Cargo').
- * @param {string} params.dispatchAction - O nome da ação a ser despachada no store (ex: 'DELETE_TURNO').
- */
+async function showPromptConfirm({ title, message, promptLabel, requiredWord, confirmText = "Confirmar" }) {
+    return new Promise((resolve) => {
+        const backdrop = $("#modalBackdrop");
+        const modalConfirmBtn = $("#modalConfirm");
+        const modalCancelBtn = $("#modalCancel");
+        
+        $("#modalTitle").textContent = title;
+        $("#modalMessage").innerHTML = `
+            <p>${message}</p>
+            <div class="form-group" style="align-items: flex-start; margin-top: 16px;">
+                <label for="modal-prompt-input" style="font-weight: 500;">${promptLabel}</label>
+                <input type="text" id="modal-prompt-input" autocomplete="off" style="width: 100%;">
+            </div>
+        `;
+        modalConfirmBtn.textContent = confirmText;
+        modalConfirmBtn.disabled = true;
+        modalCancelBtn.style.display = 'inline-flex';
+
+        const promptInput = $("#modal-prompt-input");
+
+        const inputHandler = () => {
+            modalConfirmBtn.disabled = promptInput.value !== requiredWord;
+        };
+
+        promptInput.addEventListener('input', inputHandler);
+        backdrop.classList.remove("hidden");
+        
+        const confirmHandler = () => {
+            resolve(true);
+            cleanupAndClose();
+        };
+        const cancelHandler = () => {
+            resolve(false);
+            cleanupAndClose();
+        };
+        
+        const cleanupAndClose = () => {
+            promptInput.removeEventListener('input', inputHandler);
+            modalConfirmBtn.removeEventListener('click', confirmHandler);
+            modalCancelBtn.removeEventListener('click', cancelHandler);
+            modalConfirmBtn.disabled = false;
+            $("#modalMessage").innerHTML = '';
+            backdrop.classList.add("hidden");
+        };
+
+        modalConfirmBtn.addEventListener('click', confirmHandler);
+        modalCancelBtn.addEventListener('click', cancelHandler);
+    });
+}
+
+
 async function handleDeleteItem({ id, itemName, dispatchAction }) {
     const confirmado = await showConfirm({
         title: `Confirmar Exclusão de ${itemName}?`,

@@ -56,7 +56,7 @@ turnoNomeInput.addEventListener("input", (e) => {
   if (input.value.length > 0) {
     input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
   }
-  validateInput(input); // --- ALTERAÇÃO: Usa a função global
+  validateInput(input);
   setTurnoFormDirty(true);
 });
 
@@ -113,53 +113,83 @@ function updateTurnoCargaPreview(){
 }
 
 function renderTurnos(){
-  const { turnos } = store.getState();
-  const filtro = filtroTurnosInput.value.toLowerCase();
-  
-  tblTurnosBody.innerHTML="";
-  
-  const turnosFiltrados = turnos.filter(t => t.nome.toLowerCase().includes(filtro));
-  const turnosOrdenados = [...turnosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
+    const { turnos } = store.getState();
+    const filtro = filtroTurnosInput.value.toLowerCase();
+    
+    tblTurnosBody.innerHTML = "";
+    
+    const turnosFiltrados = turnos.filter(t => t.nome.toLowerCase().includes(filtro));
+    const turnosOrdenados = [...turnosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
 
-  if (turnosOrdenados.length === 0 && filtro.length === 0) {
-      tblTurnosBody.innerHTML = `<tr><td colspan="8">
-          <div class="empty-state">
-              <div class="empty-state-icon">🕒</div>
-              <h3>Nenhum Turno Cadastrado</h3>
-              <p>Comece a adicionar turnos para poder associá-los aos cargos.</p>
-          </div>
-      </td></tr>`;
-      return;
-  }
-
-  turnosOrdenados.forEach(t=>{
-    const tr=document.createElement("tr");
-    tr.dataset.turnoId = t.id;
-    const descansoTxt = t.descansoObrigatorioHoras ? `${t.descansoObrigatorioHoras}h` : 'NT';
-    const overnightIndicator = t.fim < t.inicio ? ' 🌙' : '';
-    tr.innerHTML=`
-      <td><span class="color-dot" style="background-color: ${t.cor || '#e2e8f0'}"></span></td>
-      <td>${t.nome}</td><td>${t.inicio}</td><td>${t.fim}${overnightIndicator}</td>
-      <td>${t.almocoMin} min</td><td>${minutesToHHMM(t.cargaMin)}</td>
-      <td>${descansoTxt}</td>
-      <td>
-        <button class="secondary" data-edit="${t.id}">✏️ Editar</button>
-        <button class="danger" data-del="${t.id}">🔥 Excluir</button>
-      </td>`;
-    tblTurnosBody.appendChild(tr);
-  });
-
-  if (lastAddedTurnoId) {
-    const novaLinha = tblTurnosBody.querySelector(`tr[data-turno-id="${lastAddedTurnoId}"]`);
-    if (novaLinha) {
-      novaLinha.classList.add('new-item');
+    if (turnosOrdenados.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 8;
+        if (filtro.length === 0) {
+            cell.innerHTML = `<div class="empty-state">
+                <div class="empty-state-icon">🕒</div>
+                <h3>Nenhum Turno Cadastrado</h3>
+                <p>Comece a adicionar turnos para poder associá-los aos cargos.</p>
+            </div>`;
+        } else {
+            cell.textContent = `Nenhum turno encontrado com o termo "${filtro}".`;
+            cell.className = 'muted center';
+        }
+        row.appendChild(cell);
+        tblTurnosBody.appendChild(row);
+        return;
     }
-    lastAddedTurnoId = null;
-  }
 
-  $$(`#tblTurnos [data-edit]`).forEach(b=> b.onclick=()=>editTurnoInForm(b.dataset.edit));
-  $$(`#tblTurnos [data-del]`).forEach(b=> b.onclick=()=>deleteTurno(b.dataset.del));
+    turnosOrdenados.forEach(t => {
+        const tr = document.createElement("tr");
+        tr.dataset.turnoId = t.id;
+        const descansoTxt = t.descansoObrigatorioHoras ? `${t.descansoObrigatorioHoras}h` : 'NT';
+        const overnightIndicator = t.fim < t.inicio ? ' 🌙' : '';
+        
+        // Células de dados
+        const cells = [
+            `<span class="color-dot" style="background-color: ${t.cor || '#e2e8f0'}"></span>`,
+            t.nome,
+            t.inicio,
+            `${t.fim}${overnightIndicator}`,
+            `${t.almocoMin} min`,
+            minutesToHHMM(t.cargaMin),
+            descansoTxt
+        ];
+
+        cells.forEach(content => {
+            const td = document.createElement('td');
+            td.innerHTML = content;
+            tr.appendChild(td);
+        });
+
+        // Célula de ações
+        const tdActions = document.createElement('td');
+        const btnEdit = document.createElement('button');
+        btnEdit.className = 'secondary';
+        btnEdit.innerHTML = '✏️ Editar';
+        btnEdit.onclick = () => editTurnoInForm(t.id);
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'danger';
+        btnDel.innerHTML = '🔥 Excluir';
+        btnDel.onclick = () => deleteTurno(t.id);
+
+        tdActions.append(btnEdit, btnDel);
+        tr.appendChild(tdActions);
+
+        tblTurnosBody.appendChild(tr);
+    });
+
+    if (lastAddedTurnoId) {
+        const novaLinha = tblTurnosBody.querySelector(`tr[data-turno-id="${lastAddedTurnoId}"]`);
+        if (novaLinha) {
+            novaLinha.classList.add('new-item');
+        }
+        lastAddedTurnoId = null;
+    }
 }
+
 
 function validateTurnoForm() {
     let isValid = true;
@@ -280,8 +310,6 @@ function cancelEditTurno() {
   setTurnoFormDirty(false);
 }
 
-// --- ALTERAÇÃO ---
-// A lógica de exclusão agora usa a função genérica de utils.js
 function deleteTurno(id) {
     handleDeleteItem({
         id: id,

@@ -1,0 +1,268 @@
+/**************************************
+ * ✨ Tela de Boas-Vindas (Onboarding)
+ **************************************/
+
+#welcome-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg);
+    z-index: 200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s;
+}
+
+#welcome-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.welcome-card {
+    background-color: var(--card);
+    border-radius: var(--radius);
+    /* --- ALTERAÇÃO ---: Aumentado o padding inferior */
+    padding: 32px 48px 64px 48px;
+    box-shadow: var(--shadow);
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden; 
+}
+
+.welcome-step {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.welcome-step.active {
+    display: flex;
+}
+
+/* Animações de transição */
+@keyframes slideInFromRight {
+    from { opacity: 0; transform: translateX(50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutToLeft {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-50px); }
+}
+/* ADIÇÃO: Animações para o botão "Voltar" */
+@keyframes slideInFromLeft {
+    from { opacity: 0; transform: translateX(-50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutToRight {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(50px); }
+}
+
+.anim-slide-in-right { animation: slideInFromRight 0.4s ease-out forwards; }
+.anim-slide-out-left { position: absolute; animation: slideOutToLeft 0.4s ease-out forwards; }
+.anim-slide-in-left { animation: slideInFromLeft 0.4s ease-out forwards; }
+.anim-slide-out-right { position: absolute; animation: slideOutToRight 0.4s ease-out forwards; }
+
+
+.welcome-logo {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: transparent;
+    background: linear-gradient( to right, #00BFFF, #FF00FF, #FF0000, #FF00FF, #00BFFF );
+    background-size: 300% 100%;
+    animation: animated-gradient-text 6s linear infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    margin-bottom: 16px;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--fg);
+    margin: 0;
+}
+
+.welcome-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin: 8px 0 24px 0;
+    max-width: 450px;
+}
+
+/* --- Botões --- */
+.welcome-btn {
+    padding: 10px 24px;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 2px solid;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+    background: transparent;
+}
+
+.welcome-btn-primary {
+    border-color: var(--brand);
+    color: var(--brand);
+}
+.welcome-btn-primary:hover {
+    background: var(--brand);
+    color: #fff;
+    transform: translateY(-2px);
+}
+.welcome-btn-primary:disabled {
+    border-color: var(--border);
+    color: var(--muted);
+    background: transparent;
+    cursor: not-allowed;
+    transform: none;
+}
+.welcome-btn-secondary {
+    border: none;
+    color: var(--muted);
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    margin-top: 16px;
+}
+.welcome-btn-secondary:hover {
+    color: var(--fg);
+}
+
+
+/* --- Inputs e Forms --- */
+.welcome-form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.welcome-label {
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+.welcome-input {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 1rem;
+    text-align: center;
+    width: 80%;
+    max-width: 350px;
+}
+.welcome-input:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* --- Seleção de Tema --- */
+.welcome-theme-selector {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+}
+.welcome-theme-btn {
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: var(--bg);
+}
+.welcome-theme-btn:hover {
+    transform: translateY(-4px);
+    border-color: var(--brand);
+}
+.welcome-theme-btn.selected {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+.welcome-theme-btn span {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+}
+.welcome-theme-btn div {
+    font-weight: 500;
+    color: var(--fg);
+}
+
+
+/* --- Lista de Vantagens --- */
+.welcome-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 400px;
+}
+.welcome-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.95rem;
+    color: var(--muted);
+}
+.welcome-feature-item span {
+    font-size: 1.5rem;
+}
+
+/* --- Termos de Uso --- */
+.welcome-terms {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+}
+.welcome-terms a {
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 500;
+}
+.welcome-terms a:hover {
+    text-decoration: underline;
+}
+
+/* --- Indicador de Progresso --- */
+.welcome-progress-indicator {
+    position: absolute;
+    /* --- ALTERAÇÃO ---: Posição inferior ajustada */
+    bottom: 32px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+.progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--border);
+    transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+.progress-dot.active {
+    background-color: var(--brand);
+    transform: scale(1.3);
+}

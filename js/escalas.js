@@ -14,7 +14,7 @@ let geradorState = {
 
 // Funções de inicialização e navegação
 function resetGeradorEscala() {
-    geradorState = { excecoes: {}, feriados: [], maxDiasConsecutivos: 6, minFolgasFimSemana: 2, otimizarFolgas: false };
+    geradorState = { cargoId: null, excecoes: {}, feriados: [], maxDiasConsecutivos: 6, minFolgasFimSemana: 2, otimizarFolgas: false };
     currentEscala = null;
     $("#escalaView").classList.add('hidden');
     $("#gerador-container").classList.remove('hidden');
@@ -31,11 +31,38 @@ function resetGeradorEscala() {
     $("#minFolgasFimSemana").value = 2; 
     renderFeriadosTags();
     $('#otimizar-folgas-toggle .toggle-btn[data-value="nao"]').click();
+    if ($("#feriados-fieldset")) {
+        $("#feriados-fieldset").disabled = true;
+    }
 }
 
 function navigateWizard(targetStep) {
     $$("#gerador-container .wizard-step").forEach(step => step.classList.remove('active'));
     $(`#${targetStep}`).classList.add('active');
+}
+
+function updateHolidaySectionState() {
+    const feriadosFieldset = $("#feriados-fieldset");
+    const feriadoDataInput = $('#feriado-data-input');
+    const inicio = $("#escIni").value;
+    const fim = $("#escFim").value;
+
+    if (inicio && fim && fim >= inicio) {
+        feriadosFieldset.disabled = false;
+        feriadoDataInput.min = inicio;
+        feriadoDataInput.max = fim;
+    } else {
+        feriadosFieldset.disabled = true;
+        feriadoDataInput.min = '';
+        feriadoDataInput.max = '';
+    }
+}
+
+function resetHolidays() {
+    geradorState.feriados = [];
+    renderFeriadosTags();
+    $('#feriado-data-input').value = '';
+    $('#feriado-nome-input').value = '';
 }
 
 // Funções de inicialização e eventos
@@ -59,6 +86,7 @@ function setupEscalas() {
     };
 
     $("#escCargo").onchange = () => $("#escCargo").classList.remove('invalid');
+    
     escIniInput.onchange = () => {
         escIniInput.classList.remove('invalid');
         if (escIniInput.value) {
@@ -72,10 +100,14 @@ function setupEscalas() {
             escFimInput.value = '';
         }
         updateEscalaResumoDias();
+        resetHolidays();
+        updateHolidaySectionState();
     };
     escFimInput.onchange = () => {
         escFimInput.classList.remove('invalid');
         updateEscalaResumoDias();
+        resetHolidays();
+        updateHolidaySectionState();
     };
 
     $('#btn-add-feriado').onclick = () => addFeriado();
@@ -118,9 +150,8 @@ function setupEscalas() {
     $("#btnSalvarEscala").onclick = () => salvarEscalaAtual();
     $("#btnExcluirEscala").onclick = () => resetGeradorEscala();
     
-    // Movemos esta chamada para o início do setup para garantir que os cargos carreguem a tempo.
     renderEscCargoSelect();
+    updateHolidaySectionState();
 }
 
-// Chame a função de setup quando o script for carregado
 document.addEventListener("DOMContentLoaded", setupEscalas);

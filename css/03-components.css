@@ -236,7 +236,6 @@ button.danger:hover {
   align-self: flex-start; /* Alinha o botão à esquerda no container flex */
 }
 
-/* --- ALTERAÇÃO: Removido !important e garantido que a cor seja branca --- */
 .btn-cta {
     background: linear-gradient(45deg, #3b82f6, var(--brand));
     color: #fff; 
@@ -623,7 +622,7 @@ html[data-theme="dark"] .tab-btn:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1000; 
     
     /* EFEITO DE VIDRO NO MODAL */
     -webkit-backdrop-filter: blur(10px);
@@ -709,8 +708,8 @@ html[data-theme="dark"] .tab-btn:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px; /* Aumentado para acomodar 3 letras */
-    height: 38px; /* Aumentado para acomodar 3 letras */
+    width: 38px;
+    height: 38px;
     border: 2px solid var(--border);
     border-radius: 50%;
     cursor: pointer;
@@ -793,4 +792,49 @@ html[data-theme="dark"] .tab-btn:hover {
     background-color: var(--card);
     border-radius: calc(var(--radius) - 2px);
     z-index: -1;
+}
+
+/* --- AJUSTE 2: Espaçamento para botões de ação na tabela --- */
+.table td:has(button) {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+
+/* --- AJUSTE 3: Novos estilos para o card de Configurações --- */
+#page-configuracoes .card h2 {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+#page-configuracoes .form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    margin: 0;
+}
+
+#page-configuracoes .form-row:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+#page-configuracoes .form-row > label:first-child {
+    font-weight: 500;
+    flex-basis: 40%;
+}
+
+#page-configuracoes .form-row > input,
+#page-configuracoes .toggle-group {
+    flex-basis: 60%;
+    max-width: 350px;
+}
+#page-configuracoes .card > .form-row:last-child {
+    padding-top: 24px;
+    justify-content: flex-end;
 }

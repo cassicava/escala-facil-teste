@@ -15,9 +15,68 @@
   <link rel="stylesheet" href="css/05-dark-theme.css" />
   <link rel="stylesheet" href="css/06-responsive.css" />
   <link rel="stylesheet" href="css/07-gerador-escala.css" />
+  <link rel="stylesheet" href="css/08-welcome.css" /> 
 </head>
 <body>
 
+  <div id="welcome-overlay">
+    <div class="welcome-card">
+        
+        <div id="welcome-step-1" class="welcome-step">
+            <h2 class="welcome-title">Boas-vindas ao <span class="animated-brand-text" style="font-size: inherit;">Escala Fácil</span>!</h2>
+            <p class="welcome-subtitle">Sua nova ferramenta para criar escalas de trabalho de forma inteligente e sem estresse.</p>
+            <button id="welcome-start-btn" class="welcome-btn welcome-btn-primary">Começar</button>
+        </div>
+
+        <div id="welcome-step-2" class="welcome-step">
+            <h2 class="welcome-title">Vamos personalizar sua experiência</h2>
+            <div class="welcome-form-group">
+                <label for="welcome-nome-input" class="welcome-label">Primeiro, como podemos te chamar?</label>
+                <input type="text" id="welcome-nome-input" class="welcome-input" placeholder="Seu nome ou nome da empresa">
+            </div>
+            <div class="welcome-form-group">
+                <label class="welcome-label">Qual aparência você prefere?</label>
+                <div class="welcome-theme-selector">
+                    <button class="welcome-theme-btn" data-theme="light"><span>☀️</span><div>Claro</div></button>
+                    <button class="welcome-theme-btn" data-theme="dark"><span>🌙</span><div>Escuro</div></button>
+                </div>
+            </div>
+            <button id="welcome-personalizacao-next" class="welcome-btn welcome-btn-primary">Próximo</button>
+            <button class="welcome-btn-secondary welcome-btn-back" data-to-step="1">< Voltar</button>
+        </div>
+
+        <div id="welcome-step-3" class="welcome-step">
+            <h2 class="welcome-title">Como vamos simplificar o seu dia a dia:</h2>
+            <ul class="welcome-features-list">
+                <li class="welcome-feature-item"><span>🕒</span><div><strong>Economize Tempo:</strong> Crie escalas complexas em minutos, não em horas.</div></li>
+                <li class="welcome-feature-item"><span>✅</span><div><strong>Evite Erros:</strong> Nosso algoritmo inteligente previne conflitos de horário e garante o descanso da equipe.</div></li>
+                <li class="welcome-feature-item"><span>⚙️</span><div><strong>Tenha Flexibilidade Total:</strong> Personalize regras, feriados, folgas e exceções com facilidade.</div></li>
+                <li class="welcome-feature-item"><span>📂</span><div><strong>Centralize Tudo:</strong> Mantenha as informações de turnos, cargos e funcionários em um só lugar.</div></li>
+            </ul>
+            <button id="welcome-proposta-next" class="welcome-btn welcome-btn-primary">Próximo</button>
+            <button class="welcome-btn-secondary welcome-btn-back" data-to-step="2">< Voltar</button>
+        </div>
+
+        <div id="welcome-step-4" class="welcome-step">
+            <h2 class="welcome-title">Quase pronto!</h2>
+            <p class="welcome-subtitle">Para continuar, por favor, aceite nossos termos de uso.</p>
+            <div class="welcome-terms">
+                <input type="checkbox" id="welcome-terms-checkbox">
+                <label for="welcome-terms-checkbox">Eu li e concordo com os <a href="#" id="welcome-terms-link">Termos de Uso</a>.</label>
+            </div>
+            <button id="welcome-finish-btn" class="welcome-btn welcome-btn-primary">Concluir e Começar a Usar!</button>
+            <button class="welcome-btn-secondary welcome-btn-back" data-to-step="3">< Voltar</button>
+        </div>
+        
+        <div class="welcome-progress-indicator">
+            <span class="progress-dot" data-step="1"></span>
+            <span class="progress-dot" data-step="2"></span>
+            <span class="progress-dot" data-step="3"></span>
+            <span class="progress-dot" data-step="4"></span>
+        </div>
+
+    </div>
+  </div>
   <nav id="sidebar">
     <a href="#" class="app-brand" onclick="go('home')">
       <span class="logo-compact">EF</span>
@@ -290,7 +349,8 @@
                         </div>
                         <span id="escResumoDias" class="dias-resumo-box">Selecione o período para ver a duração da escala.</span>
                     </fieldset>
-                    <fieldset class="regras-fieldset">
+                    
+                    <fieldset class="regras-fieldset" id="feriados-fieldset" disabled>
                         <legend>Feriados no período</legend>
                         <div class="form-row" style="gap: 8px;">
                             <input type="date" class="input-sm" id="feriado-data-input">
@@ -464,6 +524,14 @@
                 <a href="#" id="linkTermosDeUso" style="color: var(--brand);">Ler os Termos de Uso</a>
             </div>
         </div>
+        <div class="card card-lista">
+            <h2>Ferramentas de Desenvolvedor</h2>
+            <p class="muted">Use estas opções para testar o comportamento da aplicação.</p>
+            <div class="form-row">
+                <button id="btnReiniciarOnboarding" class="secondary">🔁 Reiniciar Onboarding</button>
+                <button id="btnHardReset" class="danger">🔥 Apagar Todos os Dados (Hard Reset)</button>
+            </div>
+        </div>
     </section>
 
   </main>
@@ -495,6 +563,7 @@
   <script src="js/escalas.js"></script>
   <script src="js/escalas-salvas.js"></script>
   <script src="js/configuracoes.js"></script>
+  <script src="js/welcome.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

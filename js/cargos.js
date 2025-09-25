@@ -115,58 +115,87 @@ function updateCargoRegrasExplicacao() {
 // --- RENDERIZAÇÃO DA TABELA ---
 
 function renderCargos(){
-  const { cargos, funcionarios, turnos } = store.getState();
-  const filtro = filtroCargosInput.value.toLowerCase();
-  
-  tblCargosBody.innerHTML = "";
-  
-  const cargosFiltrados = cargos.filter(c => c.nome.toLowerCase().includes(filtro));
-  const cargosOrdenados = [...cargosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
+    const { cargos, funcionarios, turnos } = store.getState();
+    const filtro = filtroCargosInput.value.toLowerCase();
 
-  if (cargosOrdenados.length === 0 && filtro.length === 0) {
-    tblCargosBody.innerHTML = `<tr><td colspan="4">
-        <div class="empty-state"><div class="empty-state-icon">🏢</div>
-            <h3>Nenhum Cargo Cadastrado</h3>
-            <p>Crie cargos e associe turnos a eles para poder cadastrar funcionários.</p>
-        </div></td></tr>`;
-    return;
-  }
+    tblCargosBody.innerHTML = "";
 
-  const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
+    const cargosFiltrados = cargos.filter(c => c.nome.toLowerCase().includes(filtro));
+    const cargosOrdenados = [...cargosFiltrados].sort((a, b) => a.nome.localeCompare(b.nome));
 
-  cargosOrdenados.forEach(c => {
-    const numFuncionarios = funcionarios.filter(f => f.cargoId === c.id).length;
-    const nomesTurnos = (c.turnosIds || []).map(id => turnosMap[id]?.nome || "—").join(", ");
-    
-    let funcionamento = 'Não definido';
-    if (c.regras && c.regras.dias.length > 0) {
-        // --- ALTERAÇÃO: Usa as novas abreviações de 3 letras ---
-        const dias = c.regras.dias.map(d => DIAS_SEMANA.find(dia => dia.id === d)?.abrev).join(', ');
-        const horario = c.regras.is24h ? '24h' : `${c.regras.inicio}-${c.regras.fim}`;
-        funcionamento = `${dias} (${horario})`;
+    if (cargosOrdenados.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 4;
+        if (filtro.length === 0) {
+            cell.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏢</div>
+                <h3>Nenhum Cargo Cadastrado</h3>
+                <p>Crie cargos e associe turnos a eles para poder cadastrar funcionários.</p>
+            </div>`;
+        } else {
+            cell.textContent = `Nenhum cargo encontrado com o termo "${filtro}".`;
+            cell.className = 'muted center';
+        }
+        row.appendChild(cell);
+        tblCargosBody.appendChild(row);
+        return;
     }
 
-    const tr = document.createElement("tr");
-    tr.dataset.cargoId = c.id;
-    tr.innerHTML = `
-        <td>${c.nome} <span class="muted">(${numFuncionarios})</span></td>
-        <td>${nomesTurnos}</td>
-        <td>${funcionamento}</td>
-        <td>
-            <button class="secondary" data-edit="${c.id}">✏️ Editar</button>
-            <button class="danger" data-del="${c.id}">🔥 Excluir</button>
-        </td>`;
-    tblCargosBody.appendChild(tr);
-  });
+    const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
 
-  if (lastAddedCargoId) {
-    tblCargosBody.querySelector(`tr[data-cargo-id="${lastAddedCargoId}"]`)?.classList.add('new-item');
-    lastAddedCargoId = null;
-  }
+    cargosOrdenados.forEach(c => {
+        const numFuncionarios = funcionarios.filter(f => f.cargoId === c.id).length;
+        const nomesTurnos = (c.turnosIds || []).map(id => turnosMap[id]?.nome || "—").join(", ") || 'Nenhum';
+        
+        let funcionamento = 'Não definido';
+        if (c.regras && c.regras.dias.length > 0) {
+            const dias = c.regras.dias.map(d => DIAS_SEMANA.find(dia => dia.id === d)?.abrev).join(', ') || '';
+            const horario = c.regras.is24h ? '24h' : (c.regras.inicio && c.regras.fim ? `${c.regras.inicio}-${c.regras.fim}` : 'N/D');
+            funcionamento = `${dias} (${horario})`;
+        }
 
-  $$(`#tblCargos [data-edit]`).forEach(b => b.onclick = () => editCargoInForm(b.dataset.edit));
-  $$(`#tblCargos [data-del]`).forEach(b => b.onclick = () => deleteCargo(b.dataset.del));
+        const tr = document.createElement("tr");
+        tr.dataset.cargoId = c.id;
+
+        // Célula Nome
+        const tdNome = document.createElement('td');
+        tdNome.textContent = c.nome;
+        const spanMuted = document.createElement('span');
+        spanMuted.className = 'muted';
+        spanMuted.textContent = ` (${numFuncionarios})`;
+        tdNome.appendChild(spanMuted);
+        
+        // Célula Turnos
+        const tdTurnos = document.createElement('td');
+        tdTurnos.textContent = nomesTurnos;
+
+        // Célula Funcionamento
+        const tdFunc = document.createElement('td');
+        tdFunc.textContent = funcionamento;
+
+        // Célula Ações
+        const tdAcoes = document.createElement('td');
+        const btnEdit = document.createElement('button');
+        btnEdit.className = 'secondary';
+        btnEdit.innerHTML = '✏️ Editar';
+        btnEdit.onclick = () => editCargoInForm(c.id);
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'danger';
+        btnDel.innerHTML = '🔥 Excluir';
+        btnDel.onclick = () => deleteCargo(c.id);
+
+        tdAcoes.append(btnEdit, btnDel);
+        tr.append(tdNome, tdTurnos, tdFunc, tdAcoes);
+        tblCargosBody.appendChild(tr);
+    });
+
+    if (lastAddedCargoId) {
+        tblCargosBody.querySelector(`tr[data-cargo-id="${lastAddedCargoId}"]`)?.classList.add('new-item');
+        lastAddedCargoId = null;
+    }
 }
+
 
 // --- AÇÕES PRINCIPAIS ---
 
@@ -250,14 +279,24 @@ function cancelEditCargo() {
   setCargoFormDirty(false);
 }
 
-// --- ALTERAÇÃO ---
-// A lógica de exclusão agora usa a função genérica de utils.js
-function deleteCargo(id) {
-    handleDeleteItem({
-        id: id,
-        itemName: 'Cargo',
-        dispatchAction: 'DELETE_CARGO'
+async function deleteCargo(id) {
+    const { escalas } = store.getState();
+    const escalasAfetadas = escalas.filter(e => e.cargoId === id);
+    let message = "Atenção: esta ação é permanente e não pode ser desfeita. Excluir este item pode afetar outras partes do sistema. Deseja continuar?";
+
+    if (escalasAfetadas.length > 0) {
+        message = `Atenção: existem <strong>${escalasAfetadas.length} escala(s) salva(s)</strong> associada(s) a este cargo. Ao excluir o cargo, <strong>todas essas escalas também serão excluídas.</strong> Esta ação é permanente. Deseja continuar?`;
+    }
+
+    const confirmado = await showConfirm({
+        title: `Confirmar Exclusão de Cargo?`,
+        message: message
     });
+
+    if (confirmado) {
+        store.dispatch('DELETE_CARGO', id);
+        showToast(`Cargo e ${escalasAfetadas.length} escala(s) associada(s) foram excluídos.`);
+    }
 }
 
 
