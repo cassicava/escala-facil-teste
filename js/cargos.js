@@ -75,7 +75,7 @@ function renderDiasSemanaCargo() {
             <input type="checkbox" name="cargoDias" value="${d.id}" class="dia-checkbox">
             <span class="dia-abrev">${d.abrev}</span>
         `;
-        container = cargoDiasContainer;
+        const container = cargoDiasContainer;
         container.appendChild(lbl);
         lbl.querySelector('input').addEventListener('change', () => {
             updateCargoRegrasExplicacao();
@@ -84,7 +84,6 @@ function renderDiasSemanaCargo() {
     });
 }
 
-// ALTERAÇÃO: Lógica atualizada para controlar a visibilidade do campo de horário
 $$('#cargoHorarioToggle .toggle-btn').forEach(button => {
     button.onclick = () => {
         $$('#cargoHorarioToggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
@@ -92,7 +91,6 @@ $$('#cargoHorarioToggle .toggle-btn').forEach(button => {
         const tipo = button.dataset.value;
         cargoIs24hInput.value = tipo;
         
-        // Usa a classe hidden-height para animar a aparição
         if (tipo === '24h') {
             cargoHorarioInputsContainer.classList.add('hidden-height');
         } else {
@@ -181,11 +179,15 @@ function renderCargos(){
         const tdAcoes = document.createElement('td');
         const btnEdit = document.createElement('button');
         btnEdit.className = 'secondary';
+        // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
+        btnEdit.setAttribute('aria-label', `Editar cargo ${c.nome}`);
         btnEdit.innerHTML = '✏️ Editar';
         btnEdit.onclick = () => editCargoInForm(c.id);
 
         const btnDel = document.createElement('button');
         btnDel.className = 'danger';
+        // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
+        btnDel.setAttribute('aria-label', `Excluir cargo ${c.nome}`);
         btnDel.innerHTML = '🔥 Excluir';
         btnDel.onclick = () => deleteCargo(c.id);
 
@@ -273,7 +275,6 @@ function cancelEditCargo() {
   $$('input[name="cargoTurno"]').forEach(chk => chk.checked = false);
   
   $$('input[name="cargoDias"]').forEach(chk => chk.checked = false);
-  // ALTERAÇÃO: Define o clique no botão "24h" como padrão ao limpar
   $(`#cargoHorarioToggle .toggle-btn[data-value="24h"]`).click();
   cargoInicioInput.value = "";
   cargoFimInput.value = "";

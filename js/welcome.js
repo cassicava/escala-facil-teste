@@ -132,6 +132,11 @@ function initWelcomeScreen() {
     });
     
     nomeInput.oninput = () => {
+        // ALTERAÇÃO: Capitaliza a primeira letra automaticamente.
+        if (nomeInput.value.length > 0) {
+            nomeInput.value = nomeInput.value.charAt(0).toUpperCase() + nomeInput.value.slice(1);
+        }
+
         const nomeValido = nomeInput.value.trim() !== '';
         personalizacaoNextBtn.disabled = !nomeValido;
         onboardingState.nome = nomeInput.value;

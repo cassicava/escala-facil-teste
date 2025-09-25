@@ -6,7 +6,7 @@ let editingFuncId=null;
 let lastAddedFuncId = null;
 let funcDisponibilidadeTemporaria = {}; // Objeto para manipular a disponibilidade no formulário
 
-// --- Cache de Elementos DOM (MELHORIA) ---
+// --- Cache de Elementos DOM ---
 const funcNomeInput = $("#funcNome");
 const funcDocumentoInput = $("#funcDocumento");
 const funcCargoSelect = $("#funcCargo");
@@ -192,8 +192,6 @@ function renderFuncCargoSelect(){
     const { cargos } = store.getState();
     funcCargoSelect.innerHTML = "<option value=''>Selecione um cargo</option>";
 
-    // --- MELHORIA DE UX ---
-    // Se não houver cargos, exibe uma mensagem útil.
     if (cargos.length === 0) {
         const fieldset = funcCargoSelect.closest('label');
         if (fieldset) {
@@ -209,11 +207,9 @@ function renderFuncCargoSelect(){
         return;
     }
 
-    // Remove a mensagem de ajuda se ela existir e houver cargos.
     const fieldset = funcCargoSelect.closest('label');
     const p = fieldset?.querySelector('.muted-link-helper');
     if (p) p.remove();
-    // --- FIM DA MELHORIA ---
 
     const cargosOrdenados = [...cargos].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
     cargosOrdenados.forEach(c => {
@@ -294,11 +290,15 @@ function renderFuncs(){
           const editButton = document.createElement('button');
           editButton.className = 'secondary';
           editButton.innerHTML = '✏️ Editar';
+          // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
+          editButton.setAttribute('aria-label', `Editar funcionário ${f.nome}`);
           editButton.onclick = () => editFuncInForm(f.id);
 
           const deleteButton = document.createElement('button');
           deleteButton.className = 'danger';
           deleteButton.innerHTML = '🔥 Excluir';
+          // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
+          deleteButton.setAttribute('aria-label', `Excluir funcionário ${f.nome}`);
           deleteButton.onclick = () => deleteFuncionario(f.id);
 
           actionsCell.append(editButton, deleteButton);
@@ -382,7 +382,7 @@ function editFuncInForm(id) {
 
   btnSalvarFunc.textContent = "💾 Salvar Alterações";
   btnCancelarEdFunc.classList.remove("hidden");
-  setFuncFormDirty(false); // Reset dirty on edit
+  setFuncFormDirty(false);
   window.scrollTo(0, 0);
 }
 

@@ -146,6 +146,13 @@ fieldset {
     gap: 24px;
     margin-bottom: 16px;
 }
+.config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: start;
+}
 .grid-2-col-uneven {
     display: grid;
     grid-template-columns: 1fr 1.5fr;
@@ -272,13 +279,12 @@ button.danger:hover {
     box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
     -webkit-background-clip: border-box; 
     background-clip: border-box;
-    -webkit-text-stroke: 0;
-    text-shadow: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .btn-cta:hover {
     transform: scale(1.03);
     box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
-    color: #fff; /* Garante que a cor permaneça branca no hover */
+    color: #fff;
 }
 
 
@@ -658,7 +664,6 @@ html[data-theme="dark"] .tab-btn:hover {
     align-items: center;
     z-index: 1000; 
     
-    /* EFEITO DE VIDRO NO MODAL */
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
@@ -667,7 +672,6 @@ html[data-theme="dark"] .tab-btn:hover {
     pointer-events: none;
 }
 .modal {
-  /* O MODAL FICA SÓ COM O BACKGROUND-COLOR NORMAL, O EFEITO DE VIDRO ESTÁ NO BACKDROP */
   background-color: var(--card);
   padding: 24px;
   border-radius: var(--radius);
@@ -771,7 +775,6 @@ html[data-theme="dark"] .tab-btn:hover {
     min-width: 100px;
 }
 
-/* Novo estilo para o resumo de dias no passo 1 */
 .dias-resumo-box {
     display: inline-block;
     padding: 8px 16px;
@@ -789,8 +792,6 @@ html[data-theme="dark"] .tab-btn:hover {
     color: var(--muted);
 }
 
-
-/* --- NOVOS ESTILOS PARA O CARD DE DESTAQUE --- */
 @keyframes animated-gradient-background {
   0% { background-position: 0% 50%; }
   100% { background-position: 150% 50%; }
@@ -828,7 +829,6 @@ html[data-theme="dark"] .tab-btn:hover {
     z-index: -1;
 }
 
-/* --- AJUSTE 2: Espaçamento para botões de ação na tabela --- */
 .table td:has(button) {
     display: flex;
     gap: 8px;
@@ -836,8 +836,6 @@ html[data-theme="dark"] .tab-btn:hover {
     align-items: center;
 }
 
-
-/* --- AJUSTE 3: Novos estilos para o card de Configurações --- */
 #page-configuracoes .card h2 {
     margin-bottom: 24px;
     padding-bottom: 16px;
@@ -846,11 +844,18 @@ html[data-theme="dark"] .tab-btn:hover {
 
 #page-configuracoes .form-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* ALTERAÇÃO: Mudado de space-between para flex-start */
     align-items: center;
     padding: 16px 0;
     border-bottom: 1px solid var(--border);
     margin: 0;
+    gap: 16px; /* ALTERAÇÃO: Adicionado gap para espaçamento */
+}
+#page-configuracoes .form-row > label:first-child {
+    font-weight: 500;
+}
+#page-configuracoes .form-row > .toggle-group {
+    margin-left: 0; /* ALTERAÇÃO: Removido margin-left: auto */
 }
 
 #page-configuracoes .form-row:last-of-type {
@@ -858,22 +863,11 @@ html[data-theme="dark"] .tab-btn:hover {
     padding-bottom: 0;
 }
 
-#page-configuracoes .form-row > label:first-child {
-    font-weight: 500;
-    flex-basis: 40%;
-}
-
-#page-configuracoes .form-row > input,
-#page-configuracoes .toggle-group {
-    flex-basis: 60%;
-    max-width: 350px;
-}
 #page-configuracoes .card > .form-row:last-child {
     padding-top: 24px;
     justify-content: flex-end;
 }
 
-/* --- LOADER: Estilos para o indicador de carregamento --- */
 #loader-overlay {
     position: fixed;
     top: 0;

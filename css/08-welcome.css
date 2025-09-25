@@ -79,7 +79,7 @@
     font-weight: 700;
     line-height: 1;
     color: transparent;
-    background: linear-gradient( to right, #00BFFF, #FF00FF, #FF0000, #FF00FF, #00BFFF );
+    background: linear-gradient( to right, #00BFFF, #FF00FF, #FF00FF, #FF00FF, #00BFFF );
     background-size: 300% 100%;
     animation: animated-gradient-text 6s linear infinite;
     -webkit-background-clip: text;

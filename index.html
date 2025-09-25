@@ -263,12 +263,15 @@
         <h2>Criar / Editar</h2>
         
         <div class="form-row">
-          <label class="form-field-half">Nome Completo <input id="funcNome" type="text" placeholder="Nome do funcionário" /></label>
-          <label>Documento <input id="funcDocumento" type="text" placeholder="Opcional (Ex: CRM 12345)" /></label>
-        </div>
-
-        <div class="form-row">
-          <label class="form-field-half">Cargo<select id="funcCargo"></select></label>
+            <label class="form-field-half">Nome Completo
+                <input id="funcNome" type="text" placeholder="Nome do funcionário" />
+            </label>
+            <label>Cargo
+                <select id="funcCargo"></select>
+            </label>
+            <label>Documento
+                <input id="funcDocumento" type="text" placeholder="Opcional (Ex: CRM 12345)" />
+            </label>
         </div>
 
         <fieldset>
@@ -459,7 +462,7 @@
                     O campo **"Carência"** define um período de dias de descanso **após o término** de férias ou afastamento. Durante a carência, o funcionário não será escalado. Para acomodar esse período, o gerador de escalas utilizará as folgas regulares do funcionário, garantindo seu descanso sem gerar folgas adicionais que não estavam previstas.
                 </div>
                 <div class="form-row">
-                    <button id="btnGerarEscala" class="primary btn-cta ml-auto">Gerar Escala</button>
+                    <button id="btnGerarEscala" class="primary ml-auto">Gerar Escala</button>
                 </div>
             </div>
         </div>
@@ -512,29 +515,31 @@
 
     <section id="page-configuracoes" class="page">
         <h1>Configurações</h1>
-        <div class="card">
-            <h2>Preferências</h2>
-            <div class="form-row">
-                <label>Seu Nome ou Nome da Empresa
-                    <input type="text" id="configNome" placeholder="Digite um nome para a saudação" />
-                </label>
-            </div>
-            <div class="form-row">
-                <label>Aparência</label>
-                <div class="toggle-group" id="themeToggleGroup">
-                    <button type="button" class="toggle-btn" data-value="light">Claro</button>
-                    <button type="button" class="toggle-btn" data-value="dark">Escuro</button>
+        <div class="config-grid">
+            <div class="card">
+                <h2>Preferências</h2>
+                <div class="form-row">
+                    <label>Seu Nome ou Nome da Empresa
+                        <input type="text" id="configNome" placeholder="Digite um nome para a saudação" />
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>Aparência</label>
+                    <div class="toggle-group" id="themeToggleGroup">
+                        <button type="button" class="toggle-btn" data-value="light">☀️ Claro</button>
+                        <button type="button" class="toggle-btn" data-value="dark">🌙 Escuro</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <button id="btnSalvarConfig" class="primary">💾 Salvar</button>
                 </div>
             </div>
-            <div class="form-row">
-                <button id="btnSalvarConfig" class="primary">💾 Salvar</button>
-            </div>
-        </div>
-        <div class="card card-lista">
-            <h2>Sobre e Suporte</h2>
-            <p class="muted">Precisa de ajuda ou quer saber mais sobre o software?</p>
-            <div class="form-row">
-                <a href="#" id="linkTermosDeUso" style="color: var(--brand);">Ler os Termos de Uso</a>
+            <div class="card">
+                <h2>Sobre e Suporte</h2>
+                <p class="muted">Precisa de ajuda ou quer saber mais sobre o software?</p>
+                <div class="form-row">
+                    <a href="#" id="linkTermosDeUso" style="color: var(--brand);">Ler os Termos de Uso</a>
+                </div>
             </div>
         </div>
         <div class="card card-lista">

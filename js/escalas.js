@@ -78,7 +78,12 @@ function setupEscalas() {
     $("#btn-back-passo1").onclick = () => navigateWizard('passo1-selecao');
     $("#btn-goto-passo3").onclick = () => handleGoToPasso3();
     $("#btn-back-passo2").onclick = () => navigateWizard('passo2-cobertura');
-    $("#btnGerarEscala").onclick = () => gerarEscala();
+    
+    // ALTERAÇÃO: A chamada agora é assíncrona
+    $("#btnGerarEscala").onclick = async () => {
+        await gerarEscala();
+    };
+
     $("#btnVoltarPasso3").onclick = () => {
         $("#escalaView").classList.add('hidden');
         $("#gerador-container").classList.remove('hidden');

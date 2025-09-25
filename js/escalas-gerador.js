@@ -2,20 +2,24 @@
  * 📅 Lógica do Gerador de Escalas
  **************************************/
 
-function gerarEscala() {
+// ALTERAÇÃO: A função agora é assíncrona para não travar a interface.
+async function gerarEscala() {
     // Mostra o loader antes de iniciar o processamento pesado
-    showLoader("Gerando escala, por favor aguarde...");
+    showLoader("Analisando dados...");
 
     // Usamos um bloco try...finally para garantir que o loader seja escondido
-    // independentemente de a função terminar com sucesso ou com erro.
     try {
+        // Adiciona uma pequena pausa para garantir que o loader renderize antes do processamento pesado
+        await new Promise(res => setTimeout(res, 50));
+
         const { cargos, funcionarios, turnos } = store.getState();
         const { cargoId, inicio, fim, cobertura, excecoes, maxDiasConsecutivos, minFolgasFimSemana, feriados, otimizarFolgas } = geradorState;
 
         const cargo = cargos.find(c => c.id === cargoId);
         if (!cargo) {
             showToast("Erro: O cargo selecionado para a escala não foi encontrado. Por favor, reinicie.");
-            return; // A saída antecipada ainda acionará o `finally`
+            hideLoader(); // Garante que o loader feche em caso de erro
+            return;
         }
 
         const funcs = funcionarios.filter(f => f.cargoId === cargoId);
@@ -100,9 +104,14 @@ function gerarEscala() {
             return diasSeguidos;
         }
         
-        function tentarPreencher(slotsParaTentar, usarHoraExtra = false) {
-            slotsParaTentar.forEach(slot => {
-                if (slot.assigned) return;
+        // ALTERAÇÃO: A função de preenchimento agora também é assíncrona
+        async function tentarPreencher(slotsParaTentar, usarHoraExtra = false) {
+            for (const slot of slotsParaTentar) {
+                if (slot.assigned) continue;
+                
+                // ALTERAÇÃO: Libera o processamento para a interface a cada slot, evitando travamentos.
+                await new Promise(res => setTimeout(res, 0)); 
+                
                 const turno = turnosMap[slot.turnoId];
                 const diaSemanaId = DIAS_SEMANA[new Date(slot.date + 'T12:00:00').getUTCDay()].id;
 
@@ -163,12 +172,16 @@ function gerarEscala() {
                         finsDeSemanaTrabalhados[escolhido.id].add(`${mesAno}-${semanaId}`);
                     }
                 }
-            });
+            }
         }
         
-        tentarPreencher(slots.filter(s => !s.assigned), false);
-        tentarPreencher(slots.filter(s => !s.assigned), true);
+        showLoader("Preenchendo turnos...");
+        await tentarPreencher(slots.filter(s => !s.assigned), false);
         
+        showLoader("Otimizando com horas extras...");
+        await tentarPreencher(slots.filter(s => !s.assigned), true);
+        
+        showLoader("Ajustando feriados...");
         feriados.filter(f => f.descontaHoras).forEach(feriado => {
             const funcsNaoTrabalharamNoFeriado = funcs.filter(f => !slots.some(s => s.date === feriado.date && s.assigned === f.id));
             funcsNaoTrabalharamNoFeriado.forEach(f => {
@@ -182,13 +195,15 @@ function gerarEscala() {
         const nomeEscala = `Escala: ${cargoNome} (${new Date(inicio+'T12:00:00').toLocaleDateString()} a ${new Date(fim+'T12:00:00').toLocaleDateString()})`;
 
         currentEscala = { id: uid(), nome: nomeEscala, cargoId, inicio, fim, slots, historico, excecoes: JSON.parse(JSON.stringify(excecoes)), feriados: [...geradorState.feriados] };
+        
+        showLoader("Renderizando visualização...");
+        await new Promise(res => setTimeout(res, 20)); // Pausa para renderizar
         renderEscalaTable(currentEscala);
 
     } catch (error) {
         console.error("Ocorreu um erro ao gerar a escala:", error);
         showToast("Ocorreu um erro inesperado. Verifique os dados e tente novamente.");
     } finally {
-        // Esconde o loader quando o processamento termina (com sucesso ou erro)
         hideLoader();
     }
 }

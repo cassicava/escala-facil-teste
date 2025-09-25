@@ -20,7 +20,6 @@ html[data-theme="dark"] .card {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 html[data-theme="dark"] .modal {
-  /* O MODAL FICA SÓ COM O BACKGROUND-COLOR NORMAL, O EFEITO DE VIDRO ESTÁ NO BACKDROP */
   background-color: var(--card);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -49,20 +48,33 @@ html[data-theme="dark"] select:focus {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
 }
 
+/* ALTERAÇÃO: Garante que todos os botões sejam "fantasma" por padrão no tema escuro */
 html[data-theme="dark"] button {
-    background-color: #333333;
-    color: var(--fg);
-}
-
-html[data-theme="dark"] .tab-btn {
     background-color: transparent;
 }
 
-
-html[data-theme="dark"] button.secondary {
-    background: #525252;
-    color: var(--fg);
+html[data-theme="dark"] button.primary:hover {
+    background: var(--brand);
+    color: #fff;
 }
+html[data-theme="dark"] button.secondary {
+    border-color: var(--secondary);
+    color: var(--secondary);
+}
+html[data-theme="dark"] button.secondary:hover {
+    background: var(--secondary);
+    color: #fff;
+}
+html[data-theme="dark"] button.danger:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+html[data-theme="dark"] .tab-btn,
+html[data-theme="dark"] .tab-btn:hover {
+    background-color: transparent;
+}
+
 
 html[data-theme="dark"] .table thead th {
     background: #333333;

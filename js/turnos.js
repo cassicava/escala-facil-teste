@@ -16,7 +16,7 @@ const turnoCargaSpan = $("#turnoCarga");
 const turnoViraDiaIndicator = $("#turnoViraDia");
 const descansoToggleButtons = $$('#descansoToggleGroup .toggle-btn');
 const descansoHorasInput = $("#turnoDescansoHoras");
-const descansoHorasGroup = $("#descansoHorasGroup"); // ALTERAÇÃO: Adicionado o grupo
+const descansoHorasGroup = $("#descansoHorasGroup");
 const descansoHiddenInput = $("#descansoObrigatorioHidden");
 const btnSalvarTurno = $("#btnSalvarTurno");
 const btnCancelarEdTurno = $("#btnCancelarEdTurno");
@@ -41,7 +41,6 @@ descansoToggleButtons.forEach(button => {
         const valor = button.dataset.value;
         descansoHiddenInput.value = valor;
 
-        // ALTERAÇÃO: Controla a visibilidade do grupo em vez de apenas desabilitar o input
         if (valor === 'sim') {
             descansoHorasGroup.classList.remove('hidden-height');
             descansoHorasInput.disabled = false;
@@ -137,6 +136,7 @@ function renderTurnos(){
     tr.dataset.turnoId = t.id;
     const descansoTxt = t.descansoObrigatorioHoras ? `${t.descansoObrigatorioHoras}h` : 'NT';
     const overnightIndicator = t.fim < t.inicio ? ' 🌙' : '';
+    // ALTERAÇÃO: Adicionados aria-label para acessibilidade.
     tr.innerHTML=`
       <td><span class="color-dot" style="background-color: ${t.cor || '#e2e8f0'}"></span></td>
       <td>${t.nome}</td>
@@ -145,8 +145,8 @@ function renderTurnos(){
       <td>${t.almocoMin} min</td><td>${minutesToHHMM(t.cargaMin)}</td>
       <td>${descansoTxt}</td>
       <td>
-        <button class="secondary" data-edit="${t.id}">✏️ Editar</button>
-        <button class="danger" data-del="${t.id}">🔥 Excluir</button>
+        <button class="secondary" data-edit="${t.id}" aria-label="Editar ${t.nome}">✏️ Editar</button>
+        <button class="danger" data-del="${t.id}" aria-label="Excluir ${t.nome}">🔥 Excluir</button>
       </td>`;
     tblTurnosBody.appendChild(tr);
   });
@@ -186,7 +186,7 @@ async function saveTurnoFromForm() {
   if (turnos.some(t => t.nome.toLowerCase() === nome.toLowerCase() && t.id !== editingTurnoId)) {
       return showToast("Já existe um turno com esse nome.");
   }
-  if (turnos.some(t => t.sigla && t.sigla.toLowerCase() === sigla.toLowerCase() && t.id !== editingTurnoId)) {
+  if (sigla && turnos.some(t => t.sigla && t.sigla.toLowerCase() === sigla.toLowerCase() && t.id !== editingTurnoId)) {
       return showToast("Já existe um turno com essa sigla.");
   }
   
