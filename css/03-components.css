@@ -236,17 +236,22 @@ button.danger:hover {
   align-self: flex-start; /* Alinha o botão à esquerda no container flex */
 }
 
-/* NOVO: Botão de Ação Principal (Call to Action) */
+/* --- ALTERAÇÃO: Removido !important e garantido que a cor seja branca --- */
 .btn-cta {
     background: linear-gradient(45deg, #3b82f6, var(--brand));
-    color: #fff;
+    color: #fff; 
     border: none;
-    padding: 10px 16px; /* Padding compensa a falta de borda */
+    padding: 10px 16px; 
     box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+    -webkit-background-clip: border-box; 
+    background-clip: border-box;
+    -webkit-text-stroke: 0;
+    text-shadow: none;
 }
 .btn-cta:hover {
     transform: scale(1.03);
     box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+    color: #fff; /* Garante que a cor permaneça branca no hover */
 }
 
 
@@ -704,8 +709,8 @@ html[data-theme="dark"] .tab-btn:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 38px; /* Aumentado para acomodar 3 letras */
+    height: 38px; /* Aumentado para acomodar 3 letras */
     border: 2px solid var(--border);
     border-radius: 50%;
     cursor: pointer;

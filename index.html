@@ -299,7 +299,6 @@
                                 <button type="button" class="toggle-btn active" data-value="sim">Sim, Trabalham</button>
                                 <button type="button" class="toggle-btn" data-value="nao">Não, Folga</button>
                             </div>
-                            <button class="secondary" id="btn-add-feriado">Adicionar</button>
                         </div>
                         <div class="form-row-aligned" style="margin-top: 12px;">
                             <label>Descontar horas da carga horária?</label>
@@ -310,6 +309,9 @@
                             <div id="feriado-horas-desconto-container" class="form-row" style="margin: 0; display: none;">
                                 <input type="number" id="feriado-horas-desconto" class="input-sm" placeholder="Horas" min="0" />
                             </div>
+                        </div>
+                        <div class="form-row" style="margin-top: 16px;">
+                            <button class="secondary ml-auto" id="btn-add-feriado">Adicionar Feriado</button>
                         </div>
                         <div class="feriados-tags" id="feriados-tags-container"></div>
                         <div class="explanation-box" style="margin-top: 12px;">
@@ -456,8 +458,11 @@
             </div>
         </div>
         <div class="card card-lista">
-            <h2>Backup de Dados</h2>
-            <p class="muted">Aqui você poderá exportar todos os seus dados para um arquivo de backup ou importar dados de um arquivo salvo anteriormente.</p>
+            <h2>Sobre e Suporte</h2>
+            <p class="muted">Precisa de ajuda ou quer saber mais sobre o software?</p>
+            <div class="form-row">
+                <a href="#" id="linkTermosDeUso" style="color: var(--brand);">Ler os Termos de Uso</a>
+            </div>
         </div>
     </section>
 
@@ -466,8 +471,8 @@
   <div id="modalBackdrop" class="modal-backdrop hidden">
     <div id="modal" class="modal">
         <h3 id="modalTitle"></h3>
-        <p id="modalMessage"></p>
-        <div class="modal-actions">
+        <div id="modalMessage" style="text-align: left; max-height: 400px; overflow-y: auto; padding-right: 16px;"></div>
+        <div class="modal-actions" style="margin-top: 24px;">
             <button id="modalCancel" class="secondary">Cancelar</button>
             <button id="modalConfirm" class="primary">✓ Confirmar</button>
         </div>

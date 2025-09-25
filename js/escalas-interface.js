@@ -203,6 +203,12 @@ function renderPasso3_Excecoes(cargoId) {
              input.onchange = (e) => updateCarência(e, input.dataset.carência, func.id);
         });
         div.querySelector(`[data-add-folga="${func.id}"]`).onclick = () => addFolga(func.id);
+
+        // *** MELHORIA ADICIONADA AQUI ***
+        // Adiciona o evento de clique a todos os inputs de data para abrir o calendário
+        $$(`input[type="date"]`, div).forEach(dateInput => {
+            dateInput.onclick = () => dateInput.showPicker();
+        });
     });
 }
 

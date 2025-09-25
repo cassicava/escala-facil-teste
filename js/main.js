@@ -28,7 +28,8 @@ function applyTheme(theme) {
 
 async function go(page) {
     const currentPageEl = $('.page.active');
-    if (!currentPageEl) { // Fallback para o primeiro carregamento
+    // FALLBACK ADICIONADO: Garante que, se nenhuma página estiver ativa, a navegação funcione.
+    if (!currentPageEl) { 
         $$(".page").forEach(p => p.classList.remove("active"));
         $(`#page-${page}`).classList.add("active");
         $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
@@ -37,7 +38,6 @@ async function go(page) {
 
     const currentPageId = currentPageEl.id.replace('page-', '');
     
-    // Verifica se a página atual tem um formulário com dados não salvos
     if (dirtyForms[currentPageId]) {
         const confirmado = await showConfirm({
             title: "Descartar Alterações?",
@@ -46,11 +46,10 @@ async function go(page) {
             cancelText: "Não, Ficar"
         });
         if (!confirmado) {
-            return; // Interrompe a navegação se o usuário cancelar
+            return; 
         }
     }
 
-    // Lógica para sair do gerador de escala (que tem seu próprio estado)
     if (currentPageId === 'gerar-escala' && geradorState.cargoId && page !== 'gerar-escala') {
         const confirmado = await showConfirm({
             title: "Sair da Geração de Escala?",
@@ -99,8 +98,7 @@ function renderAll() {
     renderTurnosSelects();
     renderFuncCargoSelect();
     
-    // --- LINHA ADICIONADA PARA CORRIGIR O BUG ---
-    // Renderiza a lista de cargos na tela de gerar escala.
+    // LINHA CORRIGIDA: Garante que a lista de cargos na tela de gerar escala seja sempre atual.
     renderEscCargoSelect();
     
     loadConfigForm();

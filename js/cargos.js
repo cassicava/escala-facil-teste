@@ -140,6 +140,7 @@ function renderCargos(){
     
     let funcionamento = 'Não definido';
     if (c.regras && c.regras.dias.length > 0) {
+        // --- ALTERAÇÃO: Usa as novas abreviações de 3 letras ---
         const dias = c.regras.dias.map(d => DIAS_SEMANA.find(dia => dia.id === d)?.abrev).join(', ');
         const horario = c.regras.is24h ? '24h' : `${c.regras.inicio}-${c.regras.fim}`;
         funcionamento = `${dias} (${horario})`;
@@ -249,17 +250,16 @@ function cancelEditCargo() {
   setCargoFormDirty(false);
 }
 
-async function deleteCargo(id) {
-  const confirmado = await showConfirm({
-    title: "Confirmar Exclusão?",
-    message: "Atenção: esta ação é permanente. Excluir este item pode afetar outras partes do sistema. Deseja continuar?"
-  });
-
-  if (confirmado) {
-    store.dispatch('DELETE_CARGO', id);
-    showToast("Cargo excluído com sucesso.");
-  }
+// --- ALTERAÇÃO ---
+// A lógica de exclusão agora usa a função genérica de utils.js
+function deleteCargo(id) {
+    handleDeleteItem({
+        id: id,
+        itemName: 'Cargo',
+        dispatchAction: 'DELETE_CARGO'
+    });
 }
+
 
 // --- INICIALIZAÇÃO E EVENTOS ---
 btnSalvarCargo.onclick = saveCargoFromForm;

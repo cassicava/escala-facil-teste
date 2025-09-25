@@ -2,14 +2,16 @@
  * 🏛️ Constantes Globais
  **************************************/
 
+// --- ALTERAÇÃO ---
+// Abreviações dos dias da semana alteradas para o padrão de 3 letras para maior clareza.
 const DIAS_SEMANA = [
-    { id: 'dom', nome: 'Domingo', abrev: 'D' }, 
-    { id: 'seg', nome: 'Segunda', abrev: 'S' },
-    { id: 'ter', nome: 'Terça', abrev: 'T' }, 
-    { id: 'qua', nome: 'Quarta', abrev: 'Q' },
-    { id: 'qui', nome: 'Quinta', abrev: 'Q' }, 
-    { id: 'sex', nome: 'Sexta', abrev: 'S' },
-    { id: 'sab', nome: 'Sábado', abrev: 'S' }
+    { id: 'dom', nome: 'Domingo', abrev: 'Dom' }, 
+    { id: 'seg', nome: 'Segunda', abrev: 'Seg' },
+    { id: 'ter', nome: 'Terça', abrev: 'Ter' }, 
+    { id: 'qua', nome: 'Quarta', abrev: 'Qua' },
+    { id: 'qui', nome: 'Quinta', abrev: 'Qui' },
+    { id: 'sex', nome: 'Sexta', abrev: 'Sex' },
+    { id: 'sab', nome: 'Sábado', abrev: 'Sab' }
 ];
 
 const TIPOS_FOLGA = [

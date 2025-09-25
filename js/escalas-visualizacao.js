@@ -2,6 +2,93 @@
  * 📅 Visualização da Escala
  **************************************/
 
+/**
+ * NOVA FUNÇÃO GENÉRICA: Renderiza uma tabela de escala em um container específico.
+ * @param {object} escala - O objeto da escala a ser renderizado.
+ * @param {HTMLElement} container - O elemento DOM onde a tabela será inserida.
+ * @param {object} options - Opções de configuração.
+ * @param {boolean} options.isInteractive - Se as células de turno são clicáveis (para troca).
+ */
+function renderGenericEscalaTable(escala, container, options = {}) {
+    const { isInteractive = false } = options;
+    const { funcionarios, turnos } = store.getState();
+
+    // Filtra apenas funcionários que existem e estão na escala, para evitar erros.
+    const funcsDaEscala = [...new Set(escala.slots.map(s => s.assigned).filter(Boolean))]
+        .map(funcId => funcionarios.find(f => f.id === funcId))
+        .filter(Boolean) // Garante que funcionários excluídos não quebrem a visualização
+        .sort((a, b) => a.nome.localeCompare(b.nome));
+
+    const dateRange = dateRangeInclusive(escala.inicio, escala.fim);
+    const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
+    const turnosDoCargo = turnos.filter(t => escala.slots.some(s => s.turnoId === t.id)).sort((a, b) => a.inicio.localeCompare(b.inicio));
+
+    let tableHTML = `<table class="escala-final-table"><thead><tr><th>Funcionário</th>`;
+    dateRange.forEach(date => {
+        const d = new Date(date + 'T12:00:00');
+        const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+        const dia = d.getDate();
+        const feriado = escala.feriados.find(f => f.date === date);
+        const isFeriado = feriado ? 'feriado' : '';
+        const isWeekend = (d.getUTCDay() === 0 || d.getUTCDay() === 6) ? 'weekend' : '';
+        
+        tableHTML += `<th class="${isFeriado} ${isWeekend}" title="${feriado ? feriado.nome : ''}">${dia}<br>${diaSemana}</th>`;
+    });
+    tableHTML += `</tr></thead><tbody>`;
+
+    funcsDaEscala.forEach(func => {
+        tableHTML += `<tr><td>${func.nome}</td>`;
+        dateRange.forEach(date => {
+            // Adiciona verificação de segurança para exceções
+            const excecoesFunc = escala.excecoes ? escala.excecoes[func.id] : null;
+            const folgaDoDia = excecoesFunc?.folgas.find(f => f.date === date);
+            
+            if (excecoesFunc && excecoesFunc.ferias.dates.includes(date)) {
+                tableHTML += `<td class="celula-excecao">Férias</td>`;
+            } else if (excecoesFunc && excecoesFunc.afastamento.dates.includes(date)) {
+                tableHTML += `<td class="celula-excecao" title="Motivo: ${excecoesFunc.afastamento.motivo || 'Não informado'}">Afastado</td>`;
+            } else if (folgaDoDia) {
+                const sigla = TIPOS_FOLGA.find(tf => tf.nome === folgaDoDia.tipo)?.sigla || 'F';
+                tableHTML += `<td class="celula-excecao" data-tipo-folga="${folgaDoDia.tipo}" title="${folgaDoDia.tipo}">${sigla}</td>`;
+            } else {
+                const slot = escala.slots.find(s => s.date === date && s.assigned === func.id);
+                if (slot) {
+                    const turno = turnosMap[slot.turnoId];
+                    const cellClass = isInteractive ? 'celula-turno' : 'celula-turno-salva';
+                    const dataAttr = isInteractive ? `data-slot-id="${slot.id}"` : '';
+                    tableHTML += `<td class="${cellClass}" style="background-color:${turno.cor}" ${dataAttr}>${turno.nome}</td>`;
+                } else {
+                    tableHTML += `<td></td>`;
+                }
+            }
+        });
+        tableHTML += `</tr>`;
+    });
+    
+    tableHTML += `</tbody>`;
+
+    // Apenas adiciona o rodapé se não for uma escala salva (para não mostrar totais incorretos)
+    if(isInteractive) {
+        tableHTML += `<tfoot>`;
+        turnosDoCargo.forEach(turno => {
+            tableHTML += `<tr><td><strong>Total ${turno.nome}</strong></td>`;
+            dateRange.forEach(date => {
+                const total = escala.slots.filter(s => s.date === date && s.turnoId === turno.id && s.assigned).length;
+                tableHTML += `<td>${total}</td>`;
+            });
+            tableHTML += `</tr>`;
+        });
+        tableHTML += `</tfoot>`;
+    }
+
+    container.innerHTML = tableHTML;
+    
+    if (isInteractive) {
+        $$('.celula-turno').forEach(cell => cell.onclick = () => showSwapModal(cell.dataset.slotId));
+    }
+}
+
+
 function renderResumoDetalhado(escala) {
     const { funcionarios } = store.getState();
     const container = $("#escalaResumoDetalhado");
@@ -54,70 +141,10 @@ function renderResumoDetalhado(escala) {
     container.innerHTML = html;
 }
 
+// Função original agora usa a função genérica
 function renderEscalaTable(escala) {
-    const { funcionarios, turnos } = store.getState();
     const container = $("#escalaTabelaWrap");
-
-    const funcsDaEscala = [...new Set(escala.slots.map(s => s.assigned).filter(Boolean))]
-        .map(funcId => funcionarios.find(f => f.id === funcId)).filter(Boolean)
-        .sort((a,b) => a.nome.localeCompare(b.nome));
-
-    const dateRange = dateRangeInclusive(escala.inicio, escala.fim);
-    const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
-    const turnosDoCargo = turnos.filter(t => escala.slots.some(s => s.turnoId === t.id)).sort((a,b) => a.inicio.localeCompare(b.inicio));
-
-    let tableHTML = `<table class="escala-final-table"><thead><tr><th>Funcionário</th>`;
-    dateRange.forEach(date => {
-        const d = new Date(date + 'T12:00:00');
-        const diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'short' });
-        const dia = d.getDate();
-        const feriado = escala.feriados.find(f => f.date === date);
-        const isFeriado = feriado ? 'feriado' : '';
-        const isWeekend = (d.getUTCDay() === 0 || d.getUTCDay() === 6) ? 'weekend' : '';
-        
-        tableHTML += `<th class="${isFeriado} ${isWeekend}" title="${feriado ? feriado.nome : ''}">${dia}<br>${diaSemana}</th>`;
-    });
-    tableHTML += `</tr></thead><tbody>`;
-
-    funcsDaEscala.forEach(func => {
-        tableHTML += `<tr><td>${func.nome}</td>`;
-        dateRange.forEach(date => {
-            const exce = escala.excecoes[func.id];
-            const folgaDoDia = exce?.folgas.find(f => f.date === date);
-            if (exce && exce.ferias.dates.includes(date)) {
-                tableHTML += `<td class="celula-excecao">Férias</td>`;
-            } else if (exce && exce.afastamento.dates.includes(date)) {
-                tableHTML += `<td class="celula-excecao" title="Motivo: ${exce.afastamento.motivo || 'Não informado'}">Afastado</td>`;
-            } else if (folgaDoDia) {
-                const sigla = TIPOS_FOLGA.find(tf => tf.nome === folgaDoDia.tipo)?.sigla || 'F';
-                 tableHTML += `<td class="celula-excecao" data-tipo-folga="${folgaDoDia.tipo}" title="${folgaDoDia.tipo}">${sigla}</td>`;
-            } else {
-                const slot = escala.slots.find(s => s.date === date && s.assigned === func.id);
-                if (slot) {
-                    const turno = turnosMap[slot.turnoId];
-                    tableHTML += `<td class="celula-turno" style="background-color:${turno.cor}" data-slot-id="${slot.id}">${turno.nome}</td>`;
-                } else {
-                    tableHTML += `<td></td>`;
-                }
-            }
-        });
-        tableHTML += `</tr>`;
-    });
-    
-    tableHTML += `</tbody><tfoot>`;
-    turnosDoCargo.forEach(turno => {
-        tableHTML += `<tr><td><strong>Total ${turno.nome}</strong></td>`;
-        dateRange.forEach(date => {
-            const total = escala.slots.filter(s => s.date === date && s.turnoId === turno.id && s.assigned).length;
-            tableHTML += `<td>${total}</td>`;
-        });
-        tableHTML += `</tr>`;
-    });
-    tableHTML += `</tfoot>`;
-
-    container.innerHTML = tableHTML;
-    
-    $$('.celula-turno').forEach(cell => cell.onclick = () => showSwapModal(cell.dataset.slotId));
+    renderGenericEscalaTable(escala, container, { isInteractive: true });
     
     const turnosVagos = escala.slots.filter(s => !s.assigned).length;
     $("#escalaResumo").innerHTML = `<strong>Resumo:</strong> ${turnosVagos > 0 ? `<span style="color:red;">${turnosVagos} turnos vagos.</span>` : 'Todos os turnos foram preenchidos.'}`;

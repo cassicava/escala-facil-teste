@@ -12,6 +12,14 @@ function loadJSON(key, fallback){
   catch { return fallback; }
 }
 
+// --- ADIÇÃO ---
+// Função de validação de input centralizada.
+function validateInput(inputElement, forceValid = false) {
+    const isValid = forceValid || inputElement.value.trim() !== '';
+    inputElement.classList.toggle('invalid', !isValid);
+    return isValid;
+}
+
 function parseTimeToMinutes(t){ if(!t) return 0; const [h,m]=t.split(":").map(Number); return h*60+m; }
 function minutesToHHMM(min){ const h=String(Math.floor(min/60)).padStart(2,"0"); const m=String(min%60).padStart(2,"0"); return `${h}:${m}`; }
 function calcCarga(inicio, fim, almocoMin) {
@@ -28,13 +36,9 @@ function addDays(dateISO,n){ const d=new Date(dateISO); d.setUTCDate(d.getUTCDat
 function dateRangeInclusive(startISO,endISO){ const days=[]; let d=startISO; while(d<=endISO){ days.push(d); d=addDays(d,1); } return days; }
 
 function getWeekNumber(d) {
-    // Copia a data para não modificar a original
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    // Define para o dia da semana mais próximo de quinta-feira
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    // Pega o início do ano
     var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    // Calcula o número da semana
     var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     return weekNo;
 }
@@ -73,10 +77,13 @@ function showConfirm({ title, message, confirmText = "Confirmar", cancelText = "
     return new Promise((resolve) => {
         const backdrop = $("#modalBackdrop");
         $("#modalTitle").textContent = title;
-        $("#modalMessage").textContent = message;
+        $("#modalMessage").innerHTML = `<p>${message}</p>`; // Garante que a mensagem seja um parágrafo
         $("#modalConfirm").textContent = confirmText;
         $("#modalCancel").textContent = cancelText;
         
+        $("#modalConfirm").style.display = 'inline-flex';
+        $("#modalCancel").textContent = cancelText;
+
         backdrop.classList.remove("hidden");
 
         const confirmHandler = () => {
@@ -99,4 +106,52 @@ function showConfirm({ title, message, confirmText = "Confirmar", cancelText = "
         $("#modalConfirm").addEventListener('click', confirmHandler);
         $("#modalCancel").addEventListener('click', cancelHandler);
     });
+}
+
+/**
+ * NOVO MODAL: Exibe um modal com um título, conteúdo HTML e apenas um botão de fechar.
+ * @param {object} options
+ * @param {string} options.title - O título do modal.
+ * @param {string} options.contentHTML - O conteúdo em HTML para exibir no corpo do modal.
+ */
+function showInfoModal({ title, contentHTML }) {
+    const backdrop = $("#modalBackdrop");
+    $("#modalTitle").textContent = title;
+    $("#modalMessage").innerHTML = contentHTML; // Usa innerHTML para renderizar o texto formatado
+
+    // Esconde o botão de confirmar e ajusta o botão de cancelar para ser "Fechar"
+    $("#modalConfirm").style.display = 'none';
+    $("#modalCancel").textContent = "Fechar";
+
+    backdrop.classList.remove("hidden");
+
+    const closeHandler = () => {
+        backdrop.classList.add("hidden");
+        $("#modalCancel").removeEventListener('click', closeHandler);
+         // Restaura a visibilidade do botão de confirmar para o showConfirm funcionar
+        $("#modalConfirm").style.display = 'inline-flex';
+    };
+
+    $("#modalCancel").addEventListener('click', closeHandler);
+}
+
+// --- ADIÇÃO ---
+/**
+ * Função genérica para lidar com a exclusão de itens (Turno, Cargo, Funcionário).
+ * Exibe um modal de confirmação e, se confirmado, despacha a ação para o store.
+ * @param {object} params
+ * @param {string} params.id - O ID do item a ser excluído.
+ * @param {string} params.itemName - O nome do tipo de item (ex: 'Turno', 'Cargo').
+ * @param {string} params.dispatchAction - O nome da ação a ser despachada no store (ex: 'DELETE_TURNO').
+ */
+async function handleDeleteItem({ id, itemName, dispatchAction }) {
+    const confirmado = await showConfirm({
+        title: `Confirmar Exclusão de ${itemName}?`,
+        message: "Atenção: esta ação é permanente e não pode ser desfeita. Excluir este item pode afetar outras partes do sistema. Deseja continuar?"
+    });
+
+    if (confirmado) {
+        store.dispatch(dispatchAction, id);
+        showToast(`${itemName} excluído com sucesso.`);
+    }
 }

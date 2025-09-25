@@ -56,11 +56,7 @@ turnoNomeInput.addEventListener("input", (e) => {
   if (input.value.length > 0) {
     input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
   }
-  if (input.value.trim() === '') {
-      input.classList.add('invalid');
-  } else {
-      input.classList.remove('invalid');
-  }
+  validateInput(input); // --- ALTERAÇÃO: Usa a função global
   setTurnoFormDirty(true);
 });
 
@@ -72,16 +68,8 @@ turnoNomeInput.addEventListener("input", (e) => {
     });
 });
 
-function validateInput(inputElement, forceValid = false) {
-    if (forceValid || inputElement.value.trim() !== '') {
-        inputElement.classList.remove('invalid');
-    } else {
-        inputElement.classList.add('invalid');
-    }
-}
-
 filtroTurnosInput.addEventListener("input", () => {
-    renderTurnos(); // A própria função de render agora pega o filtro
+    renderTurnos();
 });
 
 function renderCorPalette() {
@@ -146,7 +134,7 @@ function renderTurnos(){
 
   turnosOrdenados.forEach(t=>{
     const tr=document.createElement("tr");
-    tr.dataset.turnoId = t.id; // Adiciona ID para encontrar a linha
+    tr.dataset.turnoId = t.id;
     const descansoTxt = t.descansoObrigatorioHoras ? `${t.descansoObrigatorioHoras}h` : 'NT';
     const overnightIndicator = t.fim < t.inicio ? ' 🌙' : '';
     tr.innerHTML=`
@@ -166,7 +154,7 @@ function renderTurnos(){
     if (novaLinha) {
       novaLinha.classList.add('new-item');
     }
-    lastAddedTurnoId = null; // Reseta a variável
+    lastAddedTurnoId = null;
   }
 
   $$(`#tblTurnos [data-edit]`).forEach(b=> b.onclick=()=>editTurnoInForm(b.dataset.edit));
@@ -175,26 +163,13 @@ function renderTurnos(){
 
 function validateTurnoForm() {
     let isValid = true;
-    const nome = turnoNomeInput.value.trim();
-    const inicio = turnoInicioInput.value;
-    const fim = turnoFimInput.value;
     const descansoObrigatorio = descansoHiddenInput.value === 'sim';
-    const descansoHoras = descansoHorasInput.value;
 
-    if (!nome) {
-        turnoNomeInput.classList.add('invalid');
-        isValid = false;
-    }
-    if (!inicio) {
-        turnoInicioInput.classList.add('invalid');
-        isValid = false;
-    }
-    if (!fim) {
-        turnoFimInput.classList.add('invalid');
-        isValid = false;
-    }
-    if (descansoObrigatorio && !descansoHoras) {
-        descansoHorasInput.classList.add('invalid');
+    if (!validateInput(turnoNomeInput)) isValid = false;
+    if (!validateInput(turnoInicioInput)) isValid = false;
+    if (!validateInput(turnoFimInput)) isValid = false;
+    
+    if (descansoObrigatorio && !validateInput(descansoHorasInput)) {
         isValid = false;
     }
 
@@ -277,7 +252,7 @@ function editTurnoInForm(id) {
 
   btnSalvarTurno.textContent = "💾 Salvar Alterações";
   btnCancelarEdTurno.classList.remove("hidden");
-  setTurnoFormDirty(false); // Reset dirty state on edit start
+  setTurnoFormDirty(false);
   window.scrollTo(0, 0);
 }
 
@@ -305,16 +280,14 @@ function cancelEditTurno() {
   setTurnoFormDirty(false);
 }
 
-async function deleteTurno(id) {
-  const confirmado = await showConfirm({
-      title: "Confirmar Exclusão?",
-      message: "Atenção: esta ação é permanente e não pode ser desfeita. Excluir este item pode afetar outras partes do sistema. Deseja continuar?"
-  });
-
-  if (confirmado) {
-    store.dispatch('DELETE_TURNO', id);
-    showToast("Turno excluído com sucesso.");
-  }
+// --- ALTERAÇÃO ---
+// A lógica de exclusão agora usa a função genérica de utils.js
+function deleteTurno(id) {
+    handleDeleteItem({
+        id: id,
+        itemName: 'Turno',
+        dispatchAction: 'DELETE_TURNO'
+    });
 }
 
 btnSalvarTurno.onclick = saveTurnoFromForm;
