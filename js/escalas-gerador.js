@@ -1,6 +1,48 @@
 /**************************************
- * 📅 Lógica do Gerador de Escalas
+ * 📅 Lógica do Gerador de Escalas (v2 - Aprimorada)
  **************************************/
+
+/**
+ * NOVO: Função robusta para calcular a sequência de dias de trabalho.
+ * Conta quantos dias consecutivos um funcionário trabalhou, terminando no dia anterior à data fornecida.
+ * Leva em conta que descansos obrigatórios de turnos noturnos não quebram a sequência.
+ * @returns {number} O número de dias na sequência.
+ */
+function getConsecutiveWorkDaysEndingBefore(funcId, date, assignedSlots, turnosMap) {
+    const turnosDoFuncMap = new Map(
+        assignedSlots.filter(s => s.assigned === funcId).map(s => [s.date, s])
+    );
+
+    let streak = 0;
+    let currentDate = addDays(date, -1); // Começa a verificar a partir do dia anterior
+
+    while (true) {
+        if (turnosDoFuncMap.has(currentDate)) {
+            streak++;
+        } else {
+            // Se o dia está vazio, verifica se foi um descanso obrigatório de turno noturno
+            const previousDay = addDays(currentDate, -1);
+            const previousShiftSlot = turnosDoFuncMap.get(previousDay);
+
+            if (previousShiftSlot) {
+                const turnoInfo = turnosMap[previousShiftSlot.turnoId];
+                if (turnoInfo && turnoInfo.fim < turnoInfo.inicio) {
+                    // Sim, era um turno noturno. A sequência não é quebrada.
+                    // Não incrementa a sequência, mas continua verificando para trás.
+                } else {
+                    // Era um turno diurno, então esta é uma folga real. Quebra a sequência.
+                    break;
+                }
+            } else {
+                // Dois dias vazios seguidos. Definitivamente uma folga. Quebra a sequência.
+                break;
+            }
+        }
+        currentDate = addDays(currentDate, -1); // Continua para o dia anterior
+    }
+    return streak;
+}
+
 
 async function gerarEscala() {
     showLoader("Analisando dados...");
@@ -40,13 +82,12 @@ async function gerarEscala() {
         let historico = {};
         let finsDeSemanaTrabalhados = {};
         funcs.forEach(f => {
-            historico[f.id] = { horasTrabalhadas: 0, ultimoTurnoFim: null, diasTrabalhadosConsecutivos: 0 };
+            historico[f.id] = { horasTrabalhadas: 0, ultimoTurnoFim: null };
             finsDeSemanaTrabalhados[f.id] = new Set();
         });
 
         const dateRange = dateRangeInclusive(inicio, fim);
 
-        // Pré-cálculo da meta de horas proporcional para contratos.
         const metaHorasMap = new Map();
         funcs.forEach(f => {
             const horasContratadasBase = parseFloat(f.cargaHoraria) || 0;
@@ -54,7 +95,7 @@ async function gerarEscala() {
                 metaHorasMap.set(f.id, horasContratadasBase * (dateRange.length / 7));
             } else { // Mensal
                 let metaHoras = 0;
-                const mesesNaEscala = {}; // Agrupa os dias da escala por mês/ano
+                const mesesNaEscala = {};
                 dateRange.forEach(d => {
                     const mesAno = d.slice(0, 7);
                     mesesNaEscala[mesAno] = (mesesNaEscala[mesAno] || 0) + 1;
@@ -64,7 +105,6 @@ async function gerarEscala() {
                     const [ano, mes] = mesAno.split('-').map(Number);
                     const diasNoMesCalendario = new Date(ano, mes, 0).getDate();
                     const diasDaEscalaNesseMes = mesesNaEscala[mesAno];
-                    // Calcula a meta proporcional para aquele mês
                     metaHoras += (horasContratadasBase / diasNoMesCalendario) * diasDaEscalaNesseMes;
                 }
                 metaHorasMap.set(f.id, metaHoras);
@@ -104,17 +144,6 @@ async function gerarEscala() {
             }
         });
 
-        function getDiasConsecutivos(funcId, date, assignedSlots) {
-            let diasSeguidos = 0;
-            for (let i = 1; i <= maxDiasConsecutivos; i++) {
-                const checkDate = addDays(date, -i);
-                if (assignedSlots.some(s => s.date === checkDate && s.assigned === funcId)) {
-                    diasSeguidos++;
-                } else break;
-            }
-            return diasSeguidos;
-        }
-
         async function tentarPreencher(slotsParaTentar, usarHoraExtra = false) {
             for (const slot of slotsParaTentar) {
                 if (slot.assigned) continue;
@@ -127,8 +156,13 @@ async function gerarEscala() {
                     if (excecoesMap[f.id].has(slot.date)) return null;
                     if (!f.disponibilidade[turno.id]?.includes(diaSemanaId)) return null;
                     if (slots.some(s => s.assigned === f.id && s.date === slot.date)) return null;
-                    const diasConsecutivos = getDiasConsecutivos(f.id, slot.date, slots);
-                    if (diasConsecutivos >= maxDiasConsecutivos) return null;
+                    
+                    // CORREÇÃO: Utiliza a nova função para verificar a sequência de trabalho
+                    const diasConsecutivosAnteriores = getConsecutiveWorkDaysEndingBefore(f.id, slot.date, slots, turnosMap);
+                    if ((diasConsecutivosAnteriores + 1) > maxDiasConsecutivos) {
+                        return null;
+                    }
+                    
                     const ultimoFim = historico[f.id].ultimoTurnoFim;
                     if (f.tipoContrato === 'clt' && ultimoFim) {
                         const descansoMin = (turnosMap[ultimoFim.turnoId]?.descansoObrigatorioHoras || 0) * 60;
@@ -147,9 +181,20 @@ async function gerarEscala() {
                         if ((totalFinsDeSemanaNoPeriodo.size - fdsTrabalhados) < minFolgasFdsExigidas) return null;
                     }
 
+                    // --- SCORING APRIMORADO ---
+                    // 1. Prioridade base: preencher a carga horária
                     let score = (historico[f.id].horasTrabalhadas / 60) / (maxHoras || 1) * 100;
-                    score += (diasConsecutivos / maxDiasConsecutivos) * 50;
-                    if (otimizarFolgas && diasConsecutivos > 0) score += 25;
+                    
+                    // 2. Penalidade por dias consecutivos (incentiva folgas)
+                    score += (diasConsecutivosAnteriores / maxDiasConsecutivos) * 25;
+                    
+                    // 3. MELHORIA: Penalidade por trabalhar em fins de semana (incentiva distribuição justa)
+                    if (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
+                        score += finsDeSemanaTrabalhados[f.id].size * 20;
+                    }
+                    
+                    if (otimizarFolgas && diasConsecutivosAnteriores > 0) score += 15;
+
                     return { func: f, score };
                 }).filter(Boolean).sort((a, b) => a.score - b.score);
 
@@ -193,6 +238,11 @@ async function gerarEscala() {
         showLoader("Renderizando visualização...");
         await new Promise(res => setTimeout(res, 20));
         renderEscalaTable(currentEscala);
+        
+        if (typeof initEditor === 'function') {
+            initEditor();
+        }
+
     } catch (error) {
         console.error("Ocorreu um erro ao gerar a escala:", error);
         showToast("Ocorreu um erro inesperado. Verifique os dados e tente novamente.");

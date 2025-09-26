@@ -1,23 +1,21 @@
 /**************************************
- * 🎨 Estilos do Editor Manual v3.3 (Fluxo Otimizado)
+ * 🎨 Estilos do Editor Manual v3.6 (Final)
  **************************************/
 
 #editor-toolbox {
     position: fixed;
-    top: 80px;
+    top: 60px;
     right: 24px;
-    width: 400px;
+    width: 600px;
     z-index: 100;
     border-radius: 28px;
     display: flex;
     flex-direction: column;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 80px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-
     border: 1px solid transparent;
     background-clip: padding-box;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
@@ -54,7 +52,6 @@ html[data-theme="dark"] #editor-toolbox::before {
 .toolbox-mode-selector {
     padding: 12px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    background: transparent;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -97,19 +94,11 @@ html[data-theme="dark"] #editor-toolbox::before {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
-html[data-theme="dark"] .toolbox-mode-selector {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 /* --- Cabeçalho e Tipografia --- */
 .toolbox-header {
     padding: 20px 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
-}
-
-html[data-theme="dark"] .toolbox-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toolbox-title {
@@ -139,95 +128,71 @@ html[data-theme="dark"] .toolbox-header {
     color: var(--fg);
 }
 
-.toolbox-header.with-back-btn .toolbox-title,
-.toolbox-header.with-back-btn .toolbox-subtitle {
-    padding-left: 24px;
-}
-
 /* --- Conteúdo Principal --- */
 .toolbox-content {
     padding: 16px;
     overflow-y: auto;
     flex-grow: 1;
-}
-
-/* --- Paleta de Funcionários --- */
-.employee-palette {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.employee-card {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    border-radius: 16px;
-    transition: all 0.25s ease-out;
-    border: 1px solid transparent;
-    background-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    overflow: hidden;
-}
-
-html[data-theme="dark"] .employee-card {
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-.employee-card.active {
-    box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
-    border-color: rgba(37, 99, 235, 0.5);
-}
-
-@keyframes pulse-glow {
-    from {
-        box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
-    }
-
-    to {
-        box-shadow: 0 0 20px 4px rgba(37, 99, 235, 0.2);
-    }
-}
-
-.employee-card.is-armed {
-    animation: pulse-glow 2.5s infinite alternate ease-in-out;
-}
-
-.employee-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: background-color 0.2s ease-out;
+    /* Para a animação de slide */
+    overflow-x: hidden;
     position: relative;
 }
 
-.employee-card-header:hover {
-    background-color: rgba(0, 0, 0, 0.04);
+/* --- Visão Focada de Funcionário --- */
+.focused-employee-view {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-html[data-theme="dark"] .employee-card-header:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.employee-card-header::after {
-    content: '›';
-    position: absolute;
-    right: 16px;
-    font-size: 1.5rem;
-    font-weight: bold;
+.nav-arrow {
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
     color: var(--muted);
-    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    padding: 0;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.employee-card.is-expanded .employee-card-header::after {
-    transform: rotate(90deg);
+.nav-arrow:hover {
+    background-color: var(--border);
+    color: var(--fg);
+}
+
+.focused-employee-card {
+    flex-grow: 1;
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.focused-employee-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+
+.employee-info {
+    flex-shrink: 0;
 }
 
 .employee-info h5 {
     margin: 0 0 4px 0;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 600;
 }
 
@@ -236,46 +201,16 @@ html[data-theme="dark"] .employee-card-header:hover {
     color: var(--muted);
 }
 
-/* --- Paleta de Turnos --- */
-.employee-shift-palette {
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    padding: 0 16px;
-    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-    border-top: 1px solid transparent;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.employee-card.is-expanded .employee-shift-palette {
-    max-height: 200px;
-    opacity: 1;
-    padding: 16px;
-    border-top-color: rgba(0, 0, 0, 0.08);
-}
-
-html[data-theme="dark"] .employee-card.is-expanded .employee-shift-palette {
-    border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-.shift-palette-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--muted);
-    margin: 0;
-}
-
 .shift-brushes-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 .shift-brush {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
@@ -291,7 +226,6 @@ html[data-theme="dark"] .employee-card.is-expanded .employee-shift-palette {
 
 .shift-brush:hover {
     transform: scale(1.1);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .shift-brush.selected {
@@ -299,26 +233,51 @@ html[data-theme="dark"] .employee-card.is-expanded .employee-shift-palette {
     box-shadow: 0 0 0 3px var(--card), 0 0 12px 3px var(--brand);
 }
 
-/* --- Ações e Botões --- */
-.toolbox-actions {
+.employee-progress-indicator {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.toolbox-actions.is-palette {
-    flex-direction: row;
     justify-content: center;
-    gap: 16px;
+    gap: 8px;
     margin-top: 16px;
 }
 
-/* Estilo para botões com ícone e texto */
-.toolbox-actions.is-palette button {
-    display: inline-flex;
-    align-items: center;
+.employee-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--border);
+    transition: all 0.3s ease-in-out;
+}
+
+.employee-dot.active {
+    background-color: var(--brand);
+    transform: scale(1.3);
+}
+
+/* --- Paleta de Funcionários (Modo Reatribuir) --- */
+.employee-palette {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
-    padding: 8px 16px;
+}
+
+.employee-card {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.25s ease-out;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+    cursor: pointer;
+}
+
+.employee-card:hover {
+    border-color: var(--brand);
+    background-color: #eff6ff;
+}
+
+html[data-theme="dark"] .employee-card:hover {
+    background-color: rgba(37, 99, 235, 0.1);
 }
 
 /* --- Estilos na Tabela --- */
@@ -347,11 +306,157 @@ html[data-theme="dark"] .employee-card.is-expanded .employee-shift-palette {
     background-color: rgba(37, 99, 235, 0.05);
 }
 
+.escala-final-table.employee-paint-mode {
+    cursor: cell;
+}
+
 .escala-final-table.employee-paint-mode .editable-cell:hover::after {
     background: var(--brand);
     opacity: 0.2;
 }
 
-.escala-final-table.employee-paint-mode {
-    cursor: cell;
+.escala-final-table.eraser-mode {
+    cursor: crosshair;
+}
+
+.escala-final-table.eraser-mode .editable-cell[data-slot-id]:hover::after {
+    background: var(--danger);
+    opacity: 0.25;
+}
+
+/* --- Indicadores Visuais --- */
+.employee-indicators {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    gap: 8px 12px;
+    margin-top: 8px;
+}
+
+.indicator-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: right;
+}
+
+.progress-bar-container {
+    height: 10px;
+    background-color: var(--bg);
+    border-radius: 999px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease-out, background-color 0.4s ease-out;
+}
+
+.progress-bar-main {
+    z-index: 2;
+}
+
+.progress-bar-overtime {
+    background-color: #f97316;
+    z-index: 1;
+}
+
+.progress-bar-blue {
+    background-color: #3b82f6;
+}
+
+.progress-bar-yellow {
+    background-color: #facc15;
+}
+
+.progress-bar-green {
+    background-color: #4ade80;
+}
+
+.consecutive-days-container {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.day-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--border);
+    transition: background-color 0.3s;
+}
+
+.day-dot.filled {
+    background-color: var(--secondary);
+}
+
+.day-dot.limit {
+    background-color: #ef4444;
+}
+
+.limit-alert {
+    color: #ef4444;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-left: 4px;
+}
+
+/* --- NOVO: Animações e Validação de Conflitos --- */
+/* As animações de slide foram movidas para 10-animations.css */
+.card-slide-in-right { animation: slideInFromRight 0.3s ease-out forwards; }
+.card-slide-out-left { animation: slideOutToLeft 0.3s ease-out forwards; }
+.card-slide-in-left { animation: slideInFromLeft 0.3s ease-out forwards; }
+.card-slide-out-right { animation: slideOutToRight 0.3s ease-out forwards; }
+
+.conflict-marker {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 12px 12px 0;
+    border-color: transparent var(--danger) transparent transparent;
+}
+
+.editable-cell .conflict-marker-tooltip {
+    visibility: hidden;
+    width: 220px;
+    background-color: var(--danger);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -110px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.editable-cell .conflict-marker-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--danger) transparent transparent transparent;
+}
+
+.editable-cell.has-conflict:hover .conflict-marker-tooltip {
+    visibility: visible;
+    opacity: 1;
 }

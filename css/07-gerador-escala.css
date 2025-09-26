@@ -43,7 +43,8 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 450px;
+    /* ALTERAÇÃO: Altura máxima reduzida para evitar rolagem da página */
+    max-height: 380px;
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: 12px;

@@ -24,17 +24,6 @@ function setCargoFormDirty(isDirty) {
     dirtyForms.cargos = isDirty;
 }
 
-function validateInput(inputElement, forceValid = false) {
-    const isValid = forceValid || inputElement.value.trim() !== '';
-    inputElement.classList.toggle('invalid', !isValid);
-    const label = inputElement.closest('label');
-    if (label) {
-        label.classList.toggle('invalid-label', !isValid);
-    }
-    return isValid;
-}
-
-
 // --- LÓGICA DO FORMULÁRIO ---
 
 cargoNomeInput.addEventListener("input", (e) => {
@@ -174,35 +163,16 @@ function renderCargos() {
 
         const tr = document.createElement("tr");
         tr.dataset.cargoId = c.id;
-
-        const tdNome = document.createElement('td');
-        tdNome.textContent = c.nome;
-        const spanMuted = document.createElement('span');
-        spanMuted.className = 'muted';
-        spanMuted.textContent = ` (${numFuncionarios})`;
-        tdNome.appendChild(spanMuted);
-
-        const tdTurnos = document.createElement('td');
-        tdTurnos.textContent = nomesTurnos;
-
-        const tdFunc = document.createElement('td');
-        tdFunc.textContent = funcionamento;
-
-        const tdAcoes = document.createElement('td');
-        const btnEdit = document.createElement('button');
-        btnEdit.className = 'secondary';
-        btnEdit.setAttribute('aria-label', `Editar cargo ${c.nome}`);
-        btnEdit.innerHTML = '✏️ Editar';
-        btnEdit.onclick = () => editCargoInForm(c.id);
-
-        const btnDel = document.createElement('button');
-        btnDel.className = 'danger';
-        btnDel.setAttribute('aria-label', `Excluir cargo ${c.nome}`);
-        btnDel.innerHTML = '🔥 Excluir';
-        btnDel.onclick = () => deleteCargo(c.id);
-
-        tdAcoes.append(btnEdit, btnDel);
-        tr.append(tdNome, tdTurnos, tdFunc, tdAcoes);
+        
+        tr.innerHTML = `
+            <td>${c.nome} <span class="muted">(${numFuncionarios})</span></td>
+            <td>${nomesTurnos}</td>
+            <td>${funcionamento}</td>
+            <td>
+                <button class="secondary" data-action="edit" data-id="${c.id}" aria-label="Editar cargo ${c.nome}">✏️ Editar</button>
+                <button class="danger" data-action="delete" data-id="${c.id}" aria-label="Excluir cargo ${c.nome}">🔥 Excluir</button>
+            </td>
+        `;
         tblCargosBody.appendChild(tr);
     });
 
@@ -285,7 +255,6 @@ function cancelEditCargo() {
     $$('input[name="cargoTurno"]').forEach(chk => chk.checked = false);
 
     $$('input[name="cargoDias"]').forEach(chk => chk.checked = false);
-    // CORREÇÃO: Garante que o estado visual do toggle seja resetado
     $(`.toggle-btn[data-value="24h"]`, cargoHorarioToggle).click();
     cargoInicioInput.value = "";
     cargoFimInput.value = "";
@@ -315,18 +284,37 @@ async function deleteCargo(id) {
     });
 }
 
+// --- Delegação de Eventos ---
+function handleCargosTableClick(event) {
+    const target = event.target.closest('button');
+    if (!target) return;
 
-// --- INICIALIZAÇÃO E EVENTOS ---
-btnSalvarCargo.onclick = saveCargoFromForm;
-btnCancelarEdCargo.onclick = cancelEditCargo;
-$("#btnLimparCargo").onclick = cancelEditCargo;
+    const { action, id } = target.dataset;
+    if (action === 'edit') {
+        editCargoInForm(id);
+    } else if (action === 'delete') {
+        deleteCargo(id);
+    }
+}
 
-const cargoHorarioInputs = [cargoInicioInput, cargoFimInput];
-cargoHorarioInputs.forEach(sel => sel.addEventListener('input', () => {
-    updateCargoRegrasExplicacao();
-    setCargoFormDirty(true);
-}));
+function initCargosPage() {
+    btnSalvarCargo.onclick = saveCargoFromForm;
+    btnCancelarEdCargo.onclick = cancelEditCargo;
+    $("#btnLimparCargo").onclick = cancelEditCargo;
 
-renderDiasSemanaCargo();
-// CORREÇÃO: Garante o estado inicial correto do toggle de horário
-$(`.toggle-btn[data-value="24h"]`, cargoHorarioToggle).click();
+    tblCargosBody.addEventListener('click', handleCargosTableClick);
+
+    const cargoHorarioInputs = [cargoInicioInput, cargoFimInput];
+    cargoHorarioInputs.forEach(sel => sel.addEventListener('input', () => {
+        updateCargoRegrasExplicacao();
+        setCargoFormDirty(true);
+    }));
+
+    renderDiasSemanaCargo();
+    $(`.toggle-btn[data-value="24h"]`, cargoHorarioToggle).click();
+
+    // CORREÇÃO: Reseta o estado 'dirty' após a inicialização programática
+    setCargoFormDirty(false);
+}
+
+document.addEventListener('DOMContentLoaded', initCargosPage);

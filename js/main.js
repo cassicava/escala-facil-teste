@@ -82,13 +82,56 @@ async function go(page) {
     }
 }
 
-function renderAll() {
-    console.log("Estado atualizado. Re-renderizando componentes...");
+/**
+ * Roteador de Renderização. Chamado pelo store sempre que o estado muda.
+ * Decide quais partes da UI precisam ser atualizadas com base na ação despachada.
+ * @param {string} actionName - O nome da ação que causou a atualização do estado.
+ */
+function renderRouter(actionName) {
+    console.log(`Estado atualizado via ação: ${actionName}. Re-renderizando componentes...`);
 
+    const fullRenderActions = ['LOAD_STATE'];
+    const turnoActions = ['SAVE_TURNO', 'DELETE_TURNO'];
+    const cargoActions = ['SAVE_CARGO', 'DELETE_CARGO', 'DELETE_TURNO']; // Deletar turno afeta cargos
+    const funcionarioActions = ['SAVE_FUNCIONARIO', 'DELETE_FUNCIONARIO', 'SAVE_CARGO', 'DELETE_CARGO']; // Alterar cargo afeta funcionários
+    const escalaActions = ['SAVE_ESCALA', 'DELETE_ESCALA_SALVA', 'DELETE_CARGO', 'DELETE_FUNCIONARIO']; // Alterar cargo/func afeta escalas
+
+    if (fullRenderActions.includes(actionName)) {
+        renderTurnos();
+        renderCargos();
+        renderFuncs();
+        renderEscalasList();
+        renderTurnosSelects();
+        renderFuncCargoSelect();
+        renderEscCargoSelect();
+        loadConfigForm();
+        updateWelcomeMessage();
+        return;
+    }
+
+    // Renderizações direcionadas
+    if (turnoActions.includes(actionName)) {
+        renderTurnos();
+        renderTurnosSelects(); // Afeta o formulário de cargos
+    }
+    if (cargoActions.includes(actionName)) {
+        renderCargos();
+        renderFuncCargoSelect(); // Afeta o formulário de funcionários
+        renderEscCargoSelect(); // Afeta o gerador de escala
+    }
+    if (funcionarioActions.includes(actionName)) {
+        renderFuncs();
+    }
+    if (escalaActions.includes(actionName)) {
+        renderEscalasList();
+    }
+    if (actionName === 'SAVE_CONFIG') {
+        loadConfigForm();
+        updateWelcomeMessage();
+    }
+
+    // Verificação de segurança para o gerador de escala (mantida)
     const { cargos } = store.getState();
-
-    // Verificação de segurança para o gerador de escala
-    // Se o cargo selecionado no gerador foi excluído, reseta o assistente para evitar erros.
     if (geradorState.cargoId && !cargos.some(c => c.id === geradorState.cargoId)) {
         console.warn("Cargo selecionado no gerador não existe mais. Resetando o assistente.");
         resetGeradorEscala();
@@ -96,32 +139,17 @@ function renderAll() {
             showToast("O cargo selecionado foi excluído. Por favor, comece novamente.");
         }
     }
-
-    // Renderiza as listas principais
-    renderTurnos();
-    renderCargos();
-    renderFuncs();
-    renderEscalasList();
-
-    // Renderiza componentes <select> e listas dinâmicas em outros formulários
-    renderTurnosSelects(); // Na pág. de Cargos
-    renderFuncCargoSelect(); // Na pág. de Funcionários
-    renderEscCargoSelect(); // Na pág. de Gerar Escala (BUG FIX)
-
-    // Atualiza outras partes da UI
-    loadConfigForm();
-    updateWelcomeMessage();
 }
 
 
 function initMainApp() {
     console.log("Iniciando aplicação principal...");
-    store.subscribe(renderAll);
+    store.subscribe(renderRouter); // <-- ALTERAÇÃO: Inscreve o novo roteador
 
     const { config } = store.getState();
     applyTheme(config.theme || 'light');
 
-    renderAll();
+    renderRouter('LOAD_STATE'); // <-- ALTERAÇÃO: Carga inicial com a ação explícita
     go("home"); // Inicia na página home
 
     $$(".tab-btn").forEach(b => b.onclick = () => go(b.dataset.page));

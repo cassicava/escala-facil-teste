@@ -54,7 +54,14 @@ function renderGenericEscalaTable(escala, container, options = {}) {
     tableHTML += `</tr></thead><tbody>`;
 
     funcsDaEscala.forEach(func => {
-        tableHTML += `<tr data-employee-row-id="${func.id}"><td>${func.nome}</td>`;
+        const nomeHtml = `
+            <td>
+                ${func.nome}
+                <br>
+                <small class="muted">${func.documento || '---'}</small>
+            </td>
+        `;
+        tableHTML += `<tr data-employee-row-id="${func.id}">${nomeHtml}`;
         dateRange.forEach(date => {
             const dataAttrs = isInteractive ? `data-date="${date}" data-employee-id="${func.id}"` : '';
             const cellClass = isInteractive ? 'editable-cell' : '';
@@ -157,13 +164,11 @@ function renderResumoDetalhado(escala) {
             extraInfo = `<span style="color:var(--brand); font-weight:bold;"> (-${horasFaltantes.toFixed(2)}h)</span>`;
         }
         
-        // ADIÇÃO: Classe para o feedback de flash
         const flashClass = func.id === lastEditedEmployeeId ? 'flash-update' : '';
         html += `<div class="resumo-detalhado-item ${flashClass}"><strong>${func.nome}:</strong> ${horasTrabalhadas.toFixed(2)}h / ${metaHoras.toFixed(2)}h${extraInfo}</div>`;
     });
     container.innerHTML = html;
     
-    // Reseta a variável após a renderização
     lastEditedEmployeeId = null;
 }
 
@@ -181,7 +186,6 @@ function renderEscalaTable(escala) {
     $("#escalaViewTitle").textContent = escala.nome;
     
     renderResumoDetalhado(escala);
-    initEditor();
 }
 
 async function salvarEscalaAtual(){

@@ -42,7 +42,7 @@ const store = {
         if (typeof this.mutations[actionName] === 'function') {
             this.mutations[actionName](this.state, payload);
             // Após a mutação, notificamos todos os 'listeners' sobre a mudança.
-            this.notify();
+            this.notify(actionName); // <-- ALTERAÇÃO: Passa o nome da ação.
         } else {
             console.error(`Ação "${actionName}" não encontrada.`);
         }
@@ -187,8 +187,9 @@ const store = {
 
     /**
      * Executa todas as funções 'listener' registradas.
+     * @param {string} actionName - O nome da ação que disparou a notificação.
      */
-    notify() {
-        this.listeners.forEach(listener => listener(this.state));
+    notify(actionName) {
+        this.listeners.forEach(listener => listener(actionName)); // <-- ALTERAÇÃO: Passa o nome da ação para o listener.
     }
 };

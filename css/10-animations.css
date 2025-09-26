@@ -1,0 +1,79 @@
+/**************************************
+ * ✨ Animações Globais
+ **************************************/
+
+/* Animações de Slide para Componentes */
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+}
+
+/* Animações de Fade */
+@keyframes fadeInRow {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInBorder {
+    from {
+        border-color: transparent;
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    }
+    to {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+}
+
+/* Classes de utilidade para aplicar animações */
+.anim-slide-in-right { animation: slideInFromRight 0.4s ease-out forwards; }
+.anim-slide-out-left { position: absolute; animation: slideOutToLeft 0.4s ease-out forwards; }
+.anim-slide-in-left { animation: slideInFromLeft 0.4s ease-out forwards; }
+.anim-slide-out-right { position: absolute; animation: slideOutToRight 0.4s ease-out forwards; }
+
+.new-item { animation: fadeInRow 0.5s ease-out forwards; }

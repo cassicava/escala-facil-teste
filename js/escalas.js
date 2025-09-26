@@ -17,7 +17,7 @@ function resetGeradorEscala() {
     geradorState = { cargoId: null, excecoes: {}, feriados: [], maxDiasConsecutivos: 6, minFolgasFimSemana: 2, otimizarFolgas: false };
     currentEscala = null;
 
-    if (typeof editorState !== 'undefined') {
+    if (typeof editorState !== 'undefined' && editorState) {
         editorState.isEditMode = false;
         editorState.selectedCell = null;
         editorState.currentEscala = null;
@@ -44,6 +44,9 @@ function resetGeradorEscala() {
     }
     const toolbox = $("#editor-toolbox");
     if(toolbox) toolbox.classList.add("hidden");
+
+    // Garante que o padrão do toggle de feriado seja reaplicado
+    setTrabalhaToggleState('sim'); 
 }
 
 function navigateWizard(targetStep) {
@@ -74,11 +77,9 @@ function resetHolidays() {
     $('#feriado-data-input').value = '';
     $('#feriado-nome-input').value = '';
     $('#feriado-horas-desconto').value = '';
-    // CORREÇÃO DEFINITIVA: Chama a função que força o estado
     setDescontarHorasToggleState('nao');
 }
 
-// ADIÇÃO: Nova função para forçar o estado visual do toggle
 function setDescontarHorasToggleState(value) {
     const feriadoDescontarToggle = $('#feriado-descontar-toggle');
     const feriadoHorasDescontoContainer = $('#feriado-horas-desconto-container');
@@ -89,6 +90,14 @@ function setDescontarHorasToggleState(value) {
     
     const showHorasInput = value === 'sim';
     feriadoHorasDescontoContainer.style.display = showHorasInput ? 'flex' : 'none';
+}
+
+// NOVA FUNÇÃO para definir o estado do toggle de feriado
+function setTrabalhaToggleState(value) {
+    const feriadoTrabalhaToggle = $('#feriado-trabalha-toggle');
+     $$('.toggle-btn', feriadoTrabalhaToggle).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === value);
+    });
 }
 
 
@@ -147,8 +156,7 @@ function setupEscalas() {
 
     $$('#feriado-trabalha-toggle .toggle-btn').forEach(button => {
         button.onclick = () => {
-            $$('#feriado-trabalha-toggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
+            setTrabalhaToggleState(button.dataset.value);
         };
     });
 
@@ -182,8 +190,8 @@ function setupEscalas() {
     renderEscCargoSelect();
     updateHolidaySectionState();
     
-    // Garante o estado inicial dos toggles de forma direta
-    $('#feriado-trabalha-toggle .toggle-btn[data-value="sim"]').click();
+    // ALTERAÇÃO: Define o valor padrão dos toggles de forma robusta
+    setTrabalhaToggleState('sim');
     setDescontarHorasToggleState('nao');
 }
 

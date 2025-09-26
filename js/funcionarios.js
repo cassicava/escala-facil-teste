@@ -30,18 +30,6 @@ function setFuncFormDirty(isDirty) {
     dirtyForms.funcionarios = isDirty;
 }
 
-function validateInput(inputElement, forceValid = false) {
-    const isSelect = inputElement.type === 'select-one';
-    const isValid = forceValid || (isSelect ? inputElement.value !== '' : inputElement.value.trim() !== '');
-    inputElement.classList.toggle('invalid', !isValid);
-    const label = inputElement.closest('label');
-    if (label) {
-        label.classList.toggle('invalid-label', !isValid);
-    }
-    return isValid;
-}
-
-
 // --- Lógicas dos Toggles ---
 $$('.toggle-btn', contratoToggleGroup).forEach(button => button.onclick = () => handleToggleClick(button, 'contrato'));
 $$('.toggle-btn', periodoHorasToggleGroup).forEach(button => button.onclick = () => handleToggleClick(button, 'periodo'));
@@ -237,7 +225,7 @@ function renderFuncs() {
     tblFuncionariosBody.innerHTML = "";
 
     const funcsFiltrados = funcionarios.filter(f => f.nome.toLowerCase().includes(filtro));
-    const colspan = 7;
+    const colspan = 6;
 
     if (funcsFiltrados.length === 0) {
         const emptyRow = document.createElement('tr');
@@ -291,30 +279,20 @@ function renderFuncs() {
             row.dataset.funcId = f.id;
 
             row.innerHTML = `
-            <td>${f.nome}</td>
-            <td>${f.documento || '---'}</td>
-            <td>${tipoContrato}</td>
-            <td>${cargaHoraria}</td>
-            <td>${horaExtra}</td>
-            <td>${nomesTurnos}</td>
-          `;
-
-            const actionsCell = document.createElement('td');
-            const editButton = document.createElement('button');
-            editButton.className = 'secondary';
-            editButton.innerHTML = '✏️ Editar';
-            editButton.setAttribute('aria-label', `Editar funcionário ${f.nome}`);
-            editButton.onclick = () => editFuncInForm(f.id);
-
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'danger';
-            deleteButton.innerHTML = '🔥 Excluir';
-            deleteButton.setAttribute('aria-label', `Excluir funcionário ${f.nome}`);
-            deleteButton.onclick = () => deleteFuncionario(f.id);
-
-            actionsCell.append(editButton, deleteButton);
-            row.appendChild(actionsCell);
-
+                <td>
+                    ${f.nome}
+                    <br>
+                    <small class="muted">${f.documento || '---'}</small>
+                </td>
+                <td>${tipoContrato}</td>
+                <td>${cargaHoraria}</td>
+                <td>${horaExtra}</td>
+                <td>${nomesTurnos}</td>
+                <td>
+                    <button class="secondary" data-action="edit" data-id="${f.id}" aria-label="Editar funcionário ${f.nome}">✏️ Editar</button>
+                    <button class="danger" data-action="delete" data-id="${f.id}" aria-label="Excluir funcionário ${f.nome}">🔥 Excluir</button>
+                </td>
+            `;
             tblFuncionariosBody.appendChild(row);
         });
     }
@@ -407,7 +385,6 @@ function cancelEditFunc() {
     $$('.invalid', funcNomeInput.closest('.card')).forEach(el => el.classList.remove('invalid'));
     $$('.invalid-label', funcNomeInput.closest('.card')).forEach(el => el.classList.remove('invalid-label'));
 
-    // CORREÇÃO: Garante que o estado visual do toggle seja resetado
     $(`.toggle-btn[data-value="clt"]`, contratoToggleGroup).click();
     $(`.toggle-btn[data-value="semanal"]`, periodoHorasToggleGroup).click();
     $(`.toggle-btn[data-value="nao"]`, horaExtraToggleGroup).click();
@@ -430,10 +407,38 @@ function deleteFuncionario(id) {
     });
 }
 
-// Inicialização
-btnSalvarFunc.onclick = saveFuncFromForm;
-btnCancelarEdFunc.onclick = cancelEditFunc;
-$("#btnLimparFunc").onclick = cancelEditFunc;
-$(`.toggle-btn[data-value="clt"]`, contratoToggleGroup).click();
-$(`.toggle-btn[data-value="semanal"]`, periodoHorasToggleGroup).click();
-$(`.toggle-btn[data-value="nao"]`, horaExtraToggleGroup).click();
+// --- Delegação de Eventos ---
+function handleFuncionariosTableClick(event) {
+    const target = event.target.closest('button');
+    if (!target) return;
+    
+    // O ID está na linha da tabela (tr), não no botão
+    const parentRow = target.closest('tr');
+    if (!parentRow || !parentRow.dataset.funcId) return;
+    
+    const { action } = target.dataset;
+    const id = parentRow.dataset.funcId;
+
+    if (action === 'edit') {
+        editFuncInForm(id);
+    } else if (action === 'delete') {
+        deleteFuncionario(id);
+    }
+}
+
+function initFuncionariosPage() {
+    btnSalvarFunc.onclick = saveFuncFromForm;
+    btnCancelarEdFunc.onclick = cancelEditFunc;
+    $("#btnLimparFunc").onclick = cancelEditFunc;
+    
+    tblFuncionariosBody.addEventListener('click', handleFuncionariosTableClick);
+
+    $(`.toggle-btn[data-value="clt"]`, contratoToggleGroup).click();
+    $(`.toggle-btn[data-value="semanal"]`, periodoHorasToggleGroup).click();
+    $(`.toggle-btn[data-value="nao"]`, horaExtraToggleGroup).click();
+
+    // CORREÇÃO: Reseta o estado 'dirty' após a inicialização programática
+    setFuncFormDirty(false);
+}
+
+document.addEventListener('DOMContentLoaded', initFuncionariosPage);

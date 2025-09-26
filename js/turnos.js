@@ -34,17 +34,6 @@ function setTurnoFormDirty(isDirty) {
     dirtyForms.turnos = isDirty;
 }
 
-function validateInput(inputElement, forceValid = false) {
-    const isValid = forceValid || inputElement.value.trim() !== '';
-    inputElement.classList.toggle('invalid', !isValid);
-    const label = inputElement.closest('label');
-    if (label) {
-        label.classList.toggle('invalid-label', !isValid);
-    }
-    return isValid;
-}
-
-
 descansoToggleButtons.forEach(button => {
     button.onclick = () => {
         descansoToggleButtons.forEach(btn => btn.classList.remove('active'));
@@ -156,8 +145,8 @@ function renderTurnos() {
       <td>${t.almocoMin} min</td><td>${minutesToHHMM(t.cargaMin)}</td>
       <td>${descansoTxt}</td>
       <td>
-        <button class="secondary" data-edit="${t.id}" aria-label="Editar ${t.nome}">✏️ Editar</button>
-        <button class="danger" data-del="${t.id}" aria-label="Excluir ${t.nome}">🔥 Excluir</button>
+        <button class="secondary" data-action="edit" data-id="${t.id}" aria-label="Editar ${t.nome}">✏️ Editar</button>
+        <button class="danger" data-action="delete" data-id="${t.id}" aria-label="Excluir ${t.nome}">🔥 Excluir</button>
       </td>`;
         tblTurnosBody.appendChild(tr);
     });
@@ -167,8 +156,7 @@ function renderTurnos() {
         lastAddedTurnoId = null;
     }
 
-    $$(`#tblTurnos [data-edit]`).forEach(b => b.onclick = () => editTurnoInForm(b.dataset.edit));
-    $$(`#tblTurnos [data-del]`).forEach(b => b.onclick = () => deleteTurno(b.dataset.del));
+    // REMOVIDA a atribuição de eventos em loop. Agora é feita uma única vez na inicialização.
 }
 
 function validateTurnoForm() {
@@ -293,12 +281,34 @@ function deleteTurno(id) {
     handleDeleteItem({ id: id, itemName: 'Turno', dispatchAction: 'DELETE_TURNO' });
 }
 
-// Inicialização
-btnSalvarTurno.onclick = saveTurnoFromForm;
-btnCancelarEdTurno.onclick = cancelEditTurno;
-$("#btnLimparTurno").onclick = cancelEditTurno;
+// --- Função de Delegação de Eventos ---
+function handleTurnosTableClick(event) {
+    const target = event.target.closest('button');
+    if (!target) return;
 
-renderCorPalette();
-selectCor(PALETA_CORES[0]);
-// CORREÇÃO: Garante o estado inicial correto do toggle de descanso
-$(`.toggle-btn[data-value="nao"]`, descansoToggleGroup).click();
+    const { action, id } = target.dataset;
+    if (action === 'edit') {
+        editTurnoInForm(id);
+    } else if (action === 'delete') {
+        deleteTurno(id);
+    }
+}
+
+function initTurnosPage() {
+    btnSalvarTurno.onclick = saveTurnoFromForm;
+    btnCancelarEdTurno.onclick = cancelEditTurno;
+    $("#btnLimparTurno").onclick = cancelEditTurno;
+
+    // ADIÇÃO: Listener único para a tabela de turnos
+    tblTurnosBody.addEventListener('click', handleTurnosTableClick);
+
+    renderCorPalette();
+    selectCor(PALETA_CORES[0]);
+    $(`.toggle-btn[data-value="nao"]`, descansoToggleGroup).click();
+
+    // CORREÇÃO: Reseta o estado 'dirty' após a inicialização programática
+    setTurnoFormDirty(false);
+}
+
+// A inicialização agora é chamada por um evento, garantindo que o DOM está pronto.
+document.addEventListener('DOMContentLoaded', initTurnosPage);

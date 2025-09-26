@@ -30,12 +30,28 @@ function hideLoader() {
 // --- FIM DO LOADER ---
 
 
+/**
+ * Função de validação de input consolidada e melhorada.
+ * Verifica se um campo (input ou select) tem valor.
+ * Adiciona/remove classes 'invalid' do campo e 'invalid-label' do seu label pai.
+ * @param {HTMLElement} inputElement - O elemento de input ou select a ser validado.
+ * @param {boolean} [forceValid=false] - Se true, força o campo a ser considerado válido.
+ * @returns {boolean} - Retorna true se o campo for válido, false caso contrário.
+ */
 function validateInput(inputElement, forceValid = false) {
     if (!inputElement) return true; // Se o elemento não existe, não valida.
-    const isValid = forceValid || inputElement.value.trim() !== '';
+
+    const isSelect = inputElement.tagName.toLowerCase() === 'select';
+    const isValid = forceValid || (isSelect ? inputElement.value !== '' : inputElement.value.trim() !== '');
+
     inputElement.classList.toggle('invalid', !isValid);
+    const label = inputElement.closest('label');
+    if (label) {
+        label.classList.toggle('invalid-label', !isValid);
+    }
     return isValid;
 }
+
 
 function parseTimeToMinutes(t){ if(!t) return 0; const [h,m]=t.split(":").map(Number); return h*60+m; }
 function minutesToHHMM(min){ const h=String(Math.floor(min/60)).padStart(2,"0"); const m=String(min%60).padStart(2,"0"); return `${h}:${m}`; }

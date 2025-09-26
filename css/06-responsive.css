@@ -1,3 +1,4 @@
+/* --- Telas Grandes (Ajuste Fino) --- */
 @media (max-width: 1440px) {
     .container {
         max-width: 95%;
@@ -15,12 +16,6 @@
     input, select, button, label {
         font-size: .95rem;
     }
-    .info-icon {
-        font-size: .8rem;
-    }
-    .info-icon::after {
-        font-size: .85rem;
-    }
     .list .muted {
         font-size: .9rem;
     }
@@ -29,8 +24,150 @@
     }
 }
 
+/* --- Tablets e Telas Menores --- */
 @media (max-width: 992px) {
-    .grid-3-col {
-        grid-template-columns: 1fr; /* Transforma em 1 coluna em telas menores */
+    /* --- Layouts Gerais --- */
+    .home-grid-principal,
+    .home-grid-secundario,
+    .grid-3-col,
+    .grid-2-col,
+    .grid-2-col-uneven,
+    .passo1-grid,
+    .passo2-grid,
+    .config-grid {
+        grid-template-columns: 1fr; /* Transforma em 1 coluna */
+    }
+    
+    main.container {
+        padding: 16px;
+    }
+
+    .card {
+        padding: 16px 24px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    /* --- Formulários --- */
+    .form-row, .form-row-aligned {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .form-field-half {
+        min-width: 100%;
+    }
+
+    .ml-auto {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .turno-header-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .explanation-box {
+        margin-top: 8px;
+    }
+
+    /* --- Editor Manual --- */
+    #editor-toolbox {
+        width: 95%;
+        right: 2.5%;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+    }
+}
+
+/* --- Celulares --- */
+@media (max-width: 768px) {
+    /* --- Layout Principal --- */
+    :root {
+        --sidebar-width-collapsed: 60px;
+    }
+    
+    main.container {
+        margin-left: var(--sidebar-width-collapsed);
+        padding: 8px;
+    }
+
+    #sidebar:hover .logo-full,
+    #sidebar:hover .tab-text {
+        opacity: 0; /* Impede expansão de texto em mobile */
+    }
+
+    #sidebar:hover {
+        width: var(--sidebar-width-collapsed); /* Impede expansão da sidebar */
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+        padding: 0 8px;
+    }
+
+    /* --- Componentes --- */
+    .card {
+        border-radius: 24px;
+        padding: 16px;
+    }
+
+    .welcome-card {
+        padding: 24px 16px 48px 16px;
+    }
+
+    .welcome-title {
+        font-size: 1.8rem;
+    }
+    
+    .modal {
+        width: 95%;
+        padding: 16px;
+    }
+
+    /* --- Tabelas --- */
+    /* Garante que o primeiro header da tabela não seja largo demais */
+    .table th:first-child,
+    .table td:first-child {
+        min-width: 120px;
+        max-width: 120px;
+    }
+
+    /* --- Gerador de Escala --- */
+    .dias-semana-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .dates-container, .form-row-aligned .toggle-group {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #feriado-trabalha-toggle, #feriado-descontar-toggle {
+        display: flex;
+        width: 100%;
+    }
+     #feriado-trabalha-toggle .toggle-btn, #feriado-descontar-toggle .toggle-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* --- Editor Manual --- */
+    .focused-employee-header, .focused-employee-view {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .shift-brushes-container {
+        justify-content: center;
+    }
+
+    .nav-arrow {
+        display: none; /* Esconde setas, navegação via swipe seria ideal (não implementado) */
     }
 }
