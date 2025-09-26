@@ -76,8 +76,8 @@ body {
 
 #sidebar:hover .logo-full { 
   opacity: 1;
-  /* ALTERAÇÃO: Aumentado o delay para 2 segundos */
-  transition: opacity 0.3s ease-in-out 2s; 
+  /* ALTERAÇÃO: Delay ajustado para 0.2 segundos. */
+  transition: opacity 0.3s ease-in-out 0.2s; 
 }
 
 #sidebar:hover .logo-compact { 

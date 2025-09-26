@@ -1,5 +1,5 @@
 /**************************************
- * 🎨 Estilos do Editor Manual v3.6 (Final)
+ * 🎨 Estilos do Editor Manual v4.1 (UI Final)
  **************************************/
 
 #editor-toolbox {
@@ -99,6 +99,15 @@ html[data-theme="dark"] #editor-toolbox::before {
     padding: 20px 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
+    transition: background-color 0.3s ease-in-out;
+}
+
+#editor-toolbox.override-active .toolbox-header {
+    background-color: #fffbe5;
+}
+
+html[data-theme="dark"] #editor-toolbox.override-active .toolbox-header {
+    background-color: #423c1b;
 }
 
 .toolbox-title {
@@ -133,9 +142,29 @@ html[data-theme="dark"] #editor-toolbox::before {
     padding: 16px;
     overflow-y: auto;
     flex-grow: 1;
-    /* Para a animação de slide */
     overflow-x: hidden;
     position: relative;
+}
+
+/* --- Painel de Configurações de Regras --- */
+.settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 8px;
+}
+
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.settings-row .form-label {
+    font-weight: 500;
+    color: var(--fg);
+    margin: 0;
 }
 
 /* --- Visão Focada de Funcionário --- */
@@ -340,13 +369,29 @@ html[data-theme="dark"] .employee-card:hover {
     text-align: right;
 }
 
-.progress-bar-container {
+/* NOVO: Estilos para o indicador de carga horária compacto */
+.workload-summary-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-bar-container-compact {
     height: 10px;
     background-color: var(--bg);
     border-radius: 999px;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--border);
+    flex-grow: 1;
+}
+
+.workload-text-compact {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 80px; /* Garante alinhamento consistente */
+    white-space: nowrap;
 }
 
 .progress-bar {
@@ -408,8 +453,7 @@ html[data-theme="dark"] .employee-card:hover {
     margin-left: 4px;
 }
 
-/* --- NOVO: Animações e Validação de Conflitos --- */
-/* As animações de slide foram movidas para 10-animations.css */
+/* --- Validação de Conflitos --- */
 .card-slide-in-right { animation: slideInFromRight 0.3s ease-out forwards; }
 .card-slide-out-left { animation: slideOutToLeft 0.3s ease-out forwards; }
 .card-slide-in-left { animation: slideInFromLeft 0.3s ease-out forwards; }

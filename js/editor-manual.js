@@ -1,5 +1,5 @@
 /**************************************
- * 🛠️ Lógica do Editor Manual v3.9 (Novas Features)
+ * 🛠️ Lógica do Editor Manual v4.1 (UI Final)
  **************************************/
 
 const editorState = {
@@ -11,6 +11,7 @@ const editorState = {
     selectedShiftBrush: null,
     lastHoveredDate: null, 
     animationDirection: 'right',
+    enforceRules: true, 
 };
 
 let lastEditedEmployeeId = null;
@@ -39,10 +40,6 @@ function calculateMetaHoras(employee, escala) {
     }
 }
 
-/**
- * CORREÇÃO: Lógica alinhada com a do gerador para consistência.
- * Calcula a sequência de dias de trabalho que um funcionário TERIA se trabalhasse na data alvo.
- */
 function calculateConsecutiveDaysPredictive(employeeId, escala, targetDate) {
     const { turnos } = store.getState();
     const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
@@ -51,7 +48,6 @@ function calculateConsecutiveDaysPredictive(employeeId, escala, targetDate) {
         escala.slots.filter(s => s.assigned === employeeId).map(s => [s.date, s])
     );
 
-    // Adiciona o turno alvo para a predição
     if (!turnosDoFuncMap.has(targetDate)) {
         turnosDoFuncMap.set(targetDate, { date: targetDate });
     }
@@ -81,25 +77,18 @@ function calculateConsecutiveDaysPredictive(employeeId, escala, targetDate) {
     return diasConsecutivos;
 }
 
-
-/**
- * NOVO: Função de validação proativa para verificar conflitos ANTES de uma ação.
- * @returns {Array} - Uma lista de mensagens de conflito.
- */
 function checkPotentialConflicts(employeeId, turnoId, date, escala) {
     const { turnos, funcionarios } = store.getState();
     const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
     const employee = funcionarios.find(f => f.id === employeeId);
     const conflitos = [];
 
-    // 1. Validação de Dias Consecutivos
     const maxDias = geradorState.maxDiasConsecutivos || 6;
     const diasFuturos = calculateConsecutiveDaysPredictive(employeeId, escala, date);
     if (diasFuturos > maxDias) {
         conflitos.push(`Excede o limite de ${maxDias} dias de trabalho consecutivos.`);
     }
 
-    // 2. Validação de Descanso Obrigatório
     if (employee.tipoContrato === 'clt') {
         const turnosDoFunc = escala.slots.filter(s => s.assigned === employeeId).sort((a, b) => a.date.localeCompare(b.date));
         const turnoAnterior = turnosDoFunc.filter(s => s.date < date).pop();
@@ -128,9 +117,12 @@ function initEditor() {
         editMode: 'employee', selectedCell: null, focusedEmployeeId: null,
         focusedEmployeeIndex: -1, alphabetizedFuncs: [],
         selectedShiftBrush: null, lastHoveredDate: null,
+        enforceRules: true, 
     });
     const toolbox = $("#editor-toolbox");
     if(!toolbox) return;
+    
+    toolbox.classList.remove('override-active');
 
     toolbox.classList.remove("hidden");
     $$(".toolbox-mode-btn").forEach(btn => btn.onclick = () => setEditMode(btn.dataset.mode));
@@ -153,9 +145,9 @@ function initEditor() {
 
 function setEditMode(mode) {
     editorState.editMode = mode;
-    editorState.selectedCell = null;
-    editorState.selectedShiftBrush = null;
-    editorState.lastHoveredDate = null;
+    if (mode !== 'settings') {
+        editorState.selectedCell = null;
+    }
     
     if (mode === 'employee') {
         const { funcionarios } = store.getState();
@@ -164,13 +156,18 @@ function setEditMode(mode) {
             .sort((a, b) => a.nome.localeCompare(b.nome));
         
         if (editorState.alphabetizedFuncs.length > 0) {
-            editorState.focusedEmployeeIndex = 0;
-            editorState.focusedEmployeeId = editorState.alphabetizedFuncs[0].id;
+            const currentFocusedIndex = editorState.alphabetizedFuncs.findIndex(f => f.id === editorState.focusedEmployeeId);
+            if (currentFocusedIndex !== -1) {
+                editorState.focusedEmployeeIndex = currentFocusedIndex;
+            } else {
+                editorState.focusedEmployeeIndex = 0;
+                editorState.focusedEmployeeId = editorState.alphabetizedFuncs[0].id;
+            }
         } else {
              editorState.focusedEmployeeIndex = -1;
              editorState.focusedEmployeeId = null;
         }
-    } else {
+    } else if (mode !== 'settings') {
         editorState.focusedEmployeeId = null;
         editorState.focusedEmployeeIndex = -1;
     }
@@ -207,7 +204,6 @@ function handleTableMouseover(event) {
         const employeeId = editorState.focusedEmployeeId;
         const turnoId = editorState.selectedShiftBrush;
 
-        // Limpa tooltips antigos
         $$('.proactive-conflict-tooltip').forEach(el => el.remove());
 
         if (targetDate && targetDate !== editorState.lastHoveredDate) {
@@ -216,7 +212,6 @@ function handleTableMouseover(event) {
             if(card) updateConsecutiveDaysIndicator(card, targetDate);
         }
 
-        // Validação proativa no modo pintura
         if (employeeId && turnoId && targetDate) {
             const conflitos = checkPotentialConflicts(employeeId, turnoId, targetDate, currentEscala);
             if (conflitos.length > 0) {
@@ -231,7 +226,7 @@ function handleTableMouseover(event) {
 
 // --- LÓGICA DE ATUALIZAÇÃO "CIRÚRGICA" ---
 function updateAllIndicators() {
-    if(editorState.editMode === 'employee') {
+    if(editorState.editMode === 'employee' || editorState.editMode === 'settings') {
         const card = $(".focused-employee-card");
         if(card) updateIndicatorsInCard(card);
     }
@@ -251,17 +246,25 @@ function updateIndicatorsInCard(card) {
         mainPercentage = 100;
     }
     let barColorClass = 'progress-bar-blue';
-    if (mainPercentage >= 100) barColorClass = 'progress-bar-green';
-    else if (mainPercentage > 75) barColorClass = 'progress-bar-yellow';
+    if (mainPercentage >= 105) barColorClass = 'progress-bar-green'; // Limite um pouco maior para ficar verde
+    else if (mainPercentage > 80) barColorClass = 'progress-bar-yellow';
 
-    $('.employee-stats', card).innerHTML = `${horasTrabalhadas.toFixed(1)}h / ${metaHoras.toFixed(1)}h
-        ${overtimePercentage > 0 ? `<span style="color: #f97316; font-weight: bold;"> +${(horasTrabalhadas - metaHoras).toFixed(1)}h</span>` : ''}`;
-    
+    // ALTERAÇÃO: Atualiza o novo indicador compacto de carga horária
+    const workloadText = $('.workload-text-compact', card);
+    if (workloadText) {
+        workloadText.innerHTML = `${horasTrabalhadas.toFixed(1)}h / ${metaHoras.toFixed(1)}h`;
+    }
     const mainBar = $('.progress-bar-main', card);
-    mainBar.className = `progress-bar progress-bar-main ${barColorClass}`;
-    mainBar.style.width = `${mainPercentage.toFixed(2)}%`;
-    $('.progress-bar-overtime', card).style.width = `${overtimePercentage.toFixed(2)}%`;
-
+    if (mainBar) {
+        mainBar.className = `progress-bar progress-bar-main ${barColorClass}`;
+        mainBar.style.width = `${mainPercentage.toFixed(2)}%`;
+    }
+    const overtimeBar = $('.progress-bar-overtime', card);
+    if (overtimeBar) {
+        overtimeBar.style.width = `${overtimePercentage.toFixed(2)}%`;
+    }
+    
+    // Atualiza dias consecutivos
     const targetDate = editorState.lastHoveredDate || currentEscala.fim;
     updateConsecutiveDaysIndicator(card, targetDate);
 }
@@ -329,9 +332,11 @@ function handleKeyboardNav(event){
 }
 
 function handleToolboxClick(event) {
-    const shiftBrush = event.target.closest('.shift-brush');
-    const navArrow = event.target.closest('.nav-arrow');
-    const employeeCard = event.target.closest('.employee-card');
+    const target = event.target;
+    const shiftBrush = target.closest('.shift-brush');
+    const navArrow = target.closest('.nav-arrow');
+    const employeeCard = target.closest('.employee-card');
+    const toggleBtn = target.closest('.toggle-btn');
 
     if (shiftBrush) handleSelectShiftBrush(shiftBrush.dataset.turnoId);
     if (navArrow) {
@@ -340,6 +345,9 @@ function handleToolboxClick(event) {
     }
     if (employeeCard && typeof employeeCard.onclick === 'function') {
         employeeCard.onclick();
+    }
+    if (toggleBtn && toggleBtn.dataset.action === 'toggle-rules') {
+        handleToggleRules(toggleBtn.dataset.value);
     }
 }
 
@@ -424,10 +432,34 @@ function updateToolboxView(subView = null) {
     } else if (editMode === 'eraser') {
         headerEl.innerHTML = `<h3 class="toolbox-title">🗑️ Modo Borracha</h3>
                             <p class="toolbox-subtitle">Clique em um turno na escala para apagá-lo.</p>`;
+    } 
+    else if (editMode === 'settings') {
+        headerEl.innerHTML = `<h3 class="toolbox-title">⚙️ Regras do Editor</h3>
+                            <p class="toolbox-subtitle">Controle como o editor lida com as regras da escala.</p>`;
+        contentEl.innerHTML = renderToolboxForSettings();
     }
 }
 
 // --- RENDERIZAÇÃO DE CONTEÚDO PARA TOOLBOX ---
+
+function renderToolboxForSettings() {
+    const isEnforced = editorState.enforceRules;
+    return `
+        <div class="settings-panel">
+            <div class="settings-row">
+                <label class="form-label">Forçar Cumprimento de Regras</label>
+                <div class="toggle-group">
+                    <button class="toggle-btn ${!isEnforced ? 'active' : ''}" data-action="toggle-rules" data-value="off">Desligado</button>
+                    <button class="toggle-btn ${isEnforced ? 'active' : ''}" data-action="toggle-rules" data-value="on">Ligado</button>
+                </div>
+            </div>
+            <div class="explanation-box" style="margin: 0;">
+                Quando <b>Ligado</b>, o sistema impede ações que violem as regras de descanso e dias consecutivos. Quando <b>Desligado</b>, permite a alocação forçada, mas sinaliza os conflitos gerados.
+            </div>
+        </div>
+    `;
+}
+
 function renderToolboxForFilledCell(employee, turno, slot) {
     return `<div style="padding: 0 8px;">
             <p><strong>Funcionário:</strong> ${employee.nome}</p>
@@ -530,11 +562,12 @@ function renderFocusedEmployeeView(animate = false) {
     const { turnos } = store.getState();
     const turnosDisponiveis = turnos.filter(t => employee.disponibilidade && employee.disponibilidade[t.id]);
     
+    // ALTERAÇÃO: Nova estrutura para o indicador de carga horária
     const cardHTML = `<div class="focused-employee-card" data-employee-id="${employee.id}">
             <div class="focused-employee-header">
                 <div class="employee-info">
                     <h5>${employee.nome}</h5>
-                    <div class="employee-stats muted"></div>
+                    <div class="employee-stats muted">${employee.documento || ''}</div>
                 </div>
                 <div class="shift-brushes-container">
                     ${turnosDisponiveis.map(turno => {
@@ -544,13 +577,16 @@ function renderFocusedEmployeeView(animate = false) {
                 </div>
             </div>
             <div class="employee-indicators">
-                 <span class="indicator-label">Carga Horária</span>
-                 <div class="progress-bar-container" title="Carga Horária">
-                    <div class="progress-bar progress-bar-main"></div>
-                    <div class="progress-bar progress-bar-overtime"></div>
+                <span class="indicator-label">Carga Horária</span>
+                <div class="workload-summary-compact">
+                    <div class="progress-bar-container-compact">
+                        <div class="progress-bar progress-bar-main"></div>
+                        <div class="progress-bar progress-bar-overtime"></div>
+                    </div>
+                    <span class="workload-text-compact">0.0h / 0.0h</span>
                 </div>
                 <span class="indicator-label">Dias Consecutivos</span>
-                <div class="consecutive-days-container" title="Dias Consecutivos"></div>
+                <div class="consecutive-days-container"></div>
             </div>
         </div>`;
 
@@ -576,7 +612,22 @@ function renderFocusedEmployeeView(animate = false) {
     return fullHTML;
 }
 
-// --- AÇÕES ---
+// --- AÇÕES E MANIPULADORES DE EVENTOS ---
+
+function handleToggleRules(value) {
+    editorState.enforceRules = value === 'on';
+    const toolbox = $("#editor-toolbox");
+    toolbox.classList.toggle('override-active', !editorState.enforceRules);
+    
+    if (editorState.enforceRules) {
+        showToast("Modo de regras estritas ATIVADO.");
+    } else {
+        showToast("Modo de flexibilização ATIVADO.");
+    }
+    // Re-renderiza a view de configurações para atualizar o botão 'active'
+    updateToolboxView();
+}
+
 function handleSelectShiftBrush(turnoId) {
     if (editorState.selectedShiftBrush === turnoId) {
         editorState.selectedShiftBrush = null;
@@ -587,11 +638,21 @@ function handleSelectShiftBrush(turnoId) {
     $(".toolbox-content").innerHTML = cardContent;
 }
 
-function handleAddShiftClick(employeeId, turnoId, date) {
+async function handleAddShiftClick(employeeId, turnoId, date) {
     const conflitos = checkPotentialConflicts(employeeId, turnoId, date, currentEscala);
-    if(conflitos.length > 0){
-        showToast(`Não é possível adicionar: ${conflitos.join(' ')}`);
-        return;
+    if (conflitos.length > 0) {
+        if (editorState.enforceRules) {
+            showToast(`Ação bloqueada: ${conflitos.join(' ')}`);
+            return;
+        } else {
+            const confirmado = await showConfirm({
+                title: "Confirmar Ação com Conflito?",
+                message: `Atenção: Esta alocação para ${store.getState().funcionarios.find(f=>f.id === employeeId).nome} viola a seguinte regra: <br><strong>${conflitos.join('; ')}</strong>.<br><br> Deseja continuar e registrar esta exceção?`,
+                confirmText: "Sim, Continuar",
+                cancelText: "Cancelar"
+            });
+            if (!confirmado) return;
+        }
     }
 
     const turno = store.getState().turnos.find(t => t.id === turnoId);
@@ -634,9 +695,26 @@ function handleRemoveShiftClick(slotId) {
     }
 }
 
-function handleSelectEmployeeForSlot(newEmployeeId, slotId) {
+async function handleSelectEmployeeForSlot(newEmployeeId, slotId) {
     const slot = currentEscala.slots.find(s => s.id === slotId);
     if (!slot) return;
+    
+    const conflitos = checkPotentialConflicts(newEmployeeId, slot.turnoId, slot.date, currentEscala);
+    if (conflitos.length > 0) {
+        if (editorState.enforceRules) {
+            showToast(`Ação bloqueada: ${conflitos.join(' ')}`);
+            return;
+        } else {
+            const confirmado = await showConfirm({
+                title: "Confirmar Ação com Conflito?",
+                message: `Atenção: Reatribuir este turno para ${store.getState().funcionarios.find(f=>f.id === newEmployeeId).nome} viola a seguinte regra: <br><strong>${conflitos.join('; ')}</strong>.<br><br> Deseja continuar?`,
+                confirmText: "Sim, Continuar",
+                cancelText: "Cancelar"
+            });
+            if (!confirmado) return;
+        }
+    }
+
     const oldEmployeeId = slot.assigned;
     const turno = store.getState().turnos.find(t => t.id === slot.turnoId);
     if (oldEmployeeId) {
@@ -651,10 +729,29 @@ function handleSelectEmployeeForSlot(newEmployeeId, slotId) {
     runAllValidations();
 }
 
-function handleSwapShiftClick(slot1Id, slot2Id) {
+async function handleSwapShiftClick(slot1Id, slot2Id) {
     const slot1 = currentEscala.slots.find(s => s.id === slot1Id);
     const slot2 = currentEscala.slots.find(s => s.id === slot2Id);
     if (!slot1 || !slot2) return;
+
+    const conflitosParaFunc1 = checkPotentialConflicts(slot1.assigned, slot2.turnoId, slot1.date, currentEscala);
+    const conflitosParaFunc2 = checkPotentialConflicts(slot2.assigned, slot1.turnoId, slot1.date, currentEscala);
+    const todosConflitos = [...new Set([...conflitosParaFunc1, ...conflitosParaFunc2])];
+    
+    if (todosConflitos.length > 0) {
+        if (editorState.enforceRules) {
+            showToast(`Troca bloqueada: ${todosConflitos.join(' ')}`);
+            return;
+        } else {
+            const confirmado = await showConfirm({
+                title: "Confirmar Troca com Conflito?",
+                message: `Atenção: Esta troca de turnos viola a(s) seguinte(s) regra(s): <br><strong>${todosConflitos.join('; ')}</strong>.<br><br> Deseja continuar?`,
+                confirmText: "Sim, Continuar",
+                cancelText: "Cancelar"
+            });
+            if (!confirmado) return;
+        }
+    }
 
     const { turnos } = store.getState();
     const turno1 = turnos.find(t => t.id === slot1.turnoId);
@@ -662,15 +759,13 @@ function handleSwapShiftClick(slot1Id, slot2Id) {
     const func1Id = slot1.assigned;
     const func2Id = slot2.assigned;
 
-    // Atualiza o histórico de horas
     currentEscala.historico[func1Id].horasTrabalhadas = (currentEscala.historico[func1Id].horasTrabalhadas - turno1.cargaMin) + turno2.cargaMin;
     currentEscala.historico[func2Id].horasTrabalhadas = (currentEscala.historico[func2Id].horasTrabalhadas - turno2.cargaMin) + turno1.cargaMin;
 
-    // Troca os funcionários nos slots
     slot1.assigned = func2Id;
     slot2.assigned = func1Id;
 
-    lastEditedEmployeeId = func1Id; // Para o feedback visual
+    lastEditedEmployeeId = func1Id;
     rerenderEscalaAndUpdateToolbox();
     runAllValidations();
     setTimeout(() => { lastEditedEmployeeId = func2Id; renderResumoDetalhado(currentEscala); }, 1);
@@ -723,7 +818,7 @@ function runAllValidations() {
     });
 
     const { funcionarios } = store.getState();
-    const funcsDaEscala = funcionarios.filter(f => currentEscala.historico[f.id]);
+    const funcsDaEscala = funcionarios.filter(f => currentEscala.historico && currentEscala.historico[f.id]);
 
     funcsDaEscala.forEach(func => {
         const conflitos = validateEmployeeSchedule(func.id, currentEscala);
@@ -782,7 +877,6 @@ function validateEmployeeSchedule(employeeId, escala) {
     turnosDoFunc.forEach(turno => {
         const dias = calculateConsecutiveDaysPredictive(employeeId, escala, turno.date);
         if (dias > maxDias) {
-            // Adiciona conflito apenas se já não houver um para esta data
             if (!conflitos.some(c => c.date === turno.date && c.type === 'consecutivos')) {
                 conflitos.push({
                     date: turno.date,
