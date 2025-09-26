@@ -1,10 +1,10 @@
 /**************************************
- * 👤 Funcionários
+ * 👨‍⚕️ Funcionários
  **************************************/
 
-let editingFuncId=null;
+let editingFuncId = null;
 let lastAddedFuncId = null;
-let funcDisponibilidadeTemporaria = {}; // Objeto para manipular a disponibilidade no formulário
+let funcDisponibilidadeTemporaria = {};
 
 // --- Cache de Elementos DOM ---
 const funcNomeInput = $("#funcNome");
@@ -24,12 +24,23 @@ const contratoToggleGroup = $("#contratoToggleGroup");
 const periodoHorasToggleGroup = $("#periodoHorasToggleGroup");
 const horaExtraToggleGroup = $("#horaExtraToggleGroup");
 
-
 const SEM_CARGO_DEFINIDO = "Sem Cargo Definido";
 
 function setFuncFormDirty(isDirty) {
     dirtyForms.funcionarios = isDirty;
 }
+
+function validateInput(inputElement, forceValid = false) {
+    const isSelect = inputElement.type === 'select-one';
+    const isValid = forceValid || (isSelect ? inputElement.value !== '' : inputElement.value.trim() !== '');
+    inputElement.classList.toggle('invalid', !isValid);
+    const label = inputElement.closest('label');
+    if (label) {
+        label.classList.toggle('invalid-label', !isValid);
+    }
+    return isValid;
+}
+
 
 // --- Lógicas dos Toggles ---
 $$('.toggle-btn', contratoToggleGroup).forEach(button => button.onclick = () => handleToggleClick(button, 'contrato'));
@@ -44,9 +55,9 @@ function handleToggleClick(button, type) {
     const value = button.dataset.value;
     if (type === 'contrato') {
         funcContratoInput.value = value;
-        contratoExplicacaoEl.innerHTML = value === 'clt' 
-            ? 'Funcionários <strong>CLT / Concursados</strong> seguirão rigorosamente as regras de descanso obrigatório cadastradas nos turnos.'
-            : 'Funcionários <strong>Prestadores de Serviço</strong> terão as regras de descanso obrigatório ignoradas, permitindo maior flexibilidade.';
+        contratoExplicacaoEl.innerHTML = value === 'clt'
+            ? 'Funcionários <strong>CLT / Concursados</strong> seguirão rigorosamente as regras de descanso obrigatório.'
+            : 'Funcionários <strong>Prestadores de Serviço</strong> terão as regras de descanso ignoradas.';
     } else if (type === 'periodo') {
         funcPeriodoHorasInput.value = value;
     } else if (type === 'horaExtra') {
@@ -68,7 +79,7 @@ function renderFuncTurnosForCargo() {
         placeholder.style.display = 'block';
         return;
     }
-    
+
     const cargo = cargos.find(c => c.id === cargoId);
     if (!cargo || !cargo.turnosIds || cargo.turnosIds.length === 0) {
         placeholder.style.display = 'block';
@@ -76,20 +87,20 @@ function renderFuncTurnosForCargo() {
         return;
     }
 
-    placeholder.style.display = 'none'; 
+    placeholder.style.display = 'none';
 
     const turnosDoCargo = turnos.filter(t => cargo.turnosIds.includes(t.id))
-                                .sort((a, b) => a.nome.localeCompare(b.nome));
+        .sort((a, b) => a.nome.localeCompare(b.nome));
 
     const diasParaRender = DIAS_SEMANA;
 
     turnosDoCargo.forEach(t => {
-        const isTurnoSelecionado = !!funcDisponibilidadeTemporaria[t.id]; 
-        
+        const isTurnoSelecionado = !!funcDisponibilidadeTemporaria[t.id];
+
         const item = document.createElement('div');
         item.className = 'turno-disponibilidade-item';
         item.dataset.turnoId = t.id;
-        item.classList.toggle('selecionado', isTurnoSelecionado); 
+        item.classList.toggle('selecionado', isTurnoSelecionado);
 
         const diasHtml = diasParaRender.map(d => {
             const isDiaSelecionado = isTurnoSelecionado && (funcDisponibilidadeTemporaria[t.id] || []).includes(d.id);
@@ -120,7 +131,7 @@ function renderFuncTurnosForCargo() {
 
         const toggleTurnoPrincipal = () => {
             const isChecked = chkPrincipal.checked;
-            item.classList.toggle('selecionado', isChecked); 
+            item.classList.toggle('selecionado', isChecked);
 
             if (isChecked) {
                 if (!funcDisponibilidadeTemporaria[t.id] || funcDisponibilidadeTemporaria[t.id].length === 0) {
@@ -136,9 +147,9 @@ function renderFuncTurnosForCargo() {
             }
             setFuncFormDirty(true);
         };
-        
+
         header.onclick = (e) => {
-            if (e.target.tagName !== 'INPUT') { 
+            if (e.target.tagName !== 'INPUT') {
                 chkPrincipal.checked = !chkPrincipal.checked;
                 toggleTurnoPrincipal();
             }
@@ -166,9 +177,7 @@ function renderFuncTurnosForCargo() {
     });
 }
 
-
-// --- RESTANTE DO ARQUIVO JS (save, edit, delete, etc.) ---
-
+// --- Funções de CRUD ---
 [funcNomeInput, funcCargaHorariaInput, funcDocumentoInput].forEach(input => {
     input.addEventListener("input", (e) => {
         if (e.target === funcNomeInput && e.target.value.length > 0) {
@@ -188,7 +197,7 @@ funcCargoSelect.addEventListener("change", (e) => {
 
 filtroFuncionariosInput.addEventListener("input", () => { renderFuncs(); });
 
-function renderFuncCargoSelect(){
+function renderFuncCargoSelect() {
     const { cargos } = store.getState();
     funcCargoSelect.innerHTML = "<option value=''>Selecione um cargo</option>";
 
@@ -221,63 +230,67 @@ function renderFuncCargoSelect(){
 }
 
 
-function renderFuncs(){
-  const { funcionarios, cargos, turnos } = store.getState();
-  const filtro = filtroFuncionariosInput.value.toLowerCase();
+function renderFuncs() {
+    const { funcionarios, cargos, turnos } = store.getState();
+    const filtro = filtroFuncionariosInput.value.toLowerCase();
 
-  tblFuncionariosBody.innerHTML = "";
-  
-  const funcsFiltrados = funcionarios.filter(f => f.nome.toLowerCase().includes(filtro));
-  const colspan = 7;
+    tblFuncionariosBody.innerHTML = "";
 
-  if (funcsFiltrados.length === 0) {
-    const emptyRow = document.createElement('tr');
-    const emptyCell = document.createElement('td');
-    emptyCell.colSpan = colspan;
-    if (funcionarios.length === 0) {
-        emptyCell.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👤</div><h3>Nenhum Funcionário Cadastrado</h3><p>Comece a cadastrar funcionários para poder gerar escalas.</p></div>`;
-    } else {
-        emptyCell.textContent = `Nenhum funcionário encontrado com o termo "${filtro}".`;
-        emptyCell.className = 'muted center';
+    const funcsFiltrados = funcionarios.filter(f => f.nome.toLowerCase().includes(filtro));
+    const colspan = 7;
+
+    if (funcsFiltrados.length === 0) {
+        const emptyRow = document.createElement('tr');
+        const emptyCell = document.createElement('td');
+        emptyCell.colSpan = colspan;
+        if (funcionarios.length === 0) {
+            emptyCell.innerHTML = `<div class="empty-state">
+                                <div class="empty-state-icon">👨‍⚕️</div>
+                                <h3>Nenhum Funcionário Cadastrado</h3>
+                                <p>Comece a cadastrar funcionários para poder gerar escalas.</p>
+                               </div>`;
+        } else {
+            emptyCell.textContent = `Nenhum funcionário encontrado com o termo "${filtro}".`;
+            emptyCell.className = 'muted center';
+        }
+        emptyRow.appendChild(emptyCell);
+        tblFuncionariosBody.appendChild(emptyRow);
+        return;
     }
-    emptyRow.appendChild(emptyCell);
-    tblFuncionariosBody.appendChild(emptyRow);
-    return;
-  }
-  
-  const cargosMap = Object.fromEntries(cargos.map(c => [c.id, c.nome]));
-  const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
-  
-  const agrupados = funcsFiltrados.reduce((acc, func) => {
-      const cargoNome = cargosMap[func.cargoId] || SEM_CARGO_DEFINIDO;
-      if (!acc[cargoNome]) acc[cargoNome] = [];
-      acc[cargoNome].push(func);
-      return acc;
-  }, {});
 
-  const cargosOrdenados = Object.keys(agrupados).sort((a,b) => a.localeCompare(b));
-  
-  for (const cargoNome of cargosOrdenados) {
-      const funcsDoGrupo = agrupados[cargoNome].sort((a,b) => a.nome.localeCompare(b.nome));
-      
-      const headerRow = document.createElement('tr');
-      const headerCell = document.createElement('th');
-      headerCell.colSpan = colspan;
-      headerCell.className = `group-header ${cargoNome === SEM_CARGO_DEFINIDO ? 'warning' : ''}`;
-      headerCell.textContent = cargoNome;
-      headerRow.appendChild(headerCell);
-      tblFuncionariosBody.appendChild(headerRow);
-      
-      funcsDoGrupo.forEach(f => {
-          const nomesTurnos = Object.keys(f.disponibilidade || {}).map(id => turnosMap[id]?.nome || "").join(", ") || "Nenhum";
-          const cargaHoraria = f.cargaHoraria ? `${f.cargaHoraria}h ${f.periodoHoras === 'mensal' ? '/mês' : '/semana'}` : 'N/D';
-          const horaExtra = f.fazHoraExtra ? 'Sim' : 'Não';
-          const tipoContrato = f.tipoContrato === 'pj' ? 'Prestador' : 'CLT';
-          
-          const row = document.createElement('tr');
-          row.dataset.funcId = f.id;
+    const cargosMap = Object.fromEntries(cargos.map(c => [c.id, c.nome]));
+    const turnosMap = Object.fromEntries(turnos.map(t => [t.id, t]));
 
-          row.innerHTML = `
+    const agrupados = funcsFiltrados.reduce((acc, func) => {
+        const cargoNome = cargosMap[func.cargoId] || SEM_CARGO_DEFINIDO;
+        if (!acc[cargoNome]) acc[cargoNome] = [];
+        acc[cargoNome].push(func);
+        return acc;
+    }, {});
+
+    const cargosOrdenados = Object.keys(agrupados).sort((a, b) => a.localeCompare(b));
+
+    for (const cargoNome of cargosOrdenados) {
+        const funcsDoGrupo = agrupados[cargoNome].sort((a, b) => a.nome.localeCompare(b.nome));
+
+        const headerRow = document.createElement('tr');
+        const headerCell = document.createElement('th');
+        headerCell.colSpan = colspan;
+        headerCell.className = `group-header ${cargoNome === SEM_CARGO_DEFINIDO ? 'warning' : ''}`;
+        headerCell.textContent = cargoNome;
+        headerRow.appendChild(headerCell);
+        tblFuncionariosBody.appendChild(headerRow);
+
+        funcsDoGrupo.forEach(f => {
+            const nomesTurnos = Object.keys(f.disponibilidade || {}).map(id => turnosMap[id]?.nome || "").join(", ") || "Nenhum";
+            const cargaHoraria = f.cargaHoraria ? `${f.cargaHoraria}h ${f.periodoHoras === 'mensal' ? '/mês' : '/semana'}` : 'N/D';
+            const horaExtra = f.fazHoraExtra ? 'Sim' : 'Não';
+            const tipoContrato = f.tipoContrato === 'pj' ? 'Prestador' : 'CLT';
+
+            const row = document.createElement('tr');
+            row.dataset.funcId = f.id;
+
+            row.innerHTML = `
             <td>${f.nome}</td>
             <td>${f.documento || '---'}</td>
             <td>${tipoContrato}</td>
@@ -286,40 +299,38 @@ function renderFuncs(){
             <td>${nomesTurnos}</td>
           `;
 
-          const actionsCell = document.createElement('td');
-          const editButton = document.createElement('button');
-          editButton.className = 'secondary';
-          editButton.innerHTML = '✏️ Editar';
-          // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
-          editButton.setAttribute('aria-label', `Editar funcionário ${f.nome}`);
-          editButton.onclick = () => editFuncInForm(f.id);
+            const actionsCell = document.createElement('td');
+            const editButton = document.createElement('button');
+            editButton.className = 'secondary';
+            editButton.innerHTML = '✏️ Editar';
+            editButton.setAttribute('aria-label', `Editar funcionário ${f.nome}`);
+            editButton.onclick = () => editFuncInForm(f.id);
 
-          const deleteButton = document.createElement('button');
-          deleteButton.className = 'danger';
-          deleteButton.innerHTML = '🔥 Excluir';
-          // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
-          deleteButton.setAttribute('aria-label', `Excluir funcionário ${f.nome}`);
-          deleteButton.onclick = () => deleteFuncionario(f.id);
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'danger';
+            deleteButton.innerHTML = '🔥 Excluir';
+            deleteButton.setAttribute('aria-label', `Excluir funcionário ${f.nome}`);
+            deleteButton.onclick = () => deleteFuncionario(f.id);
 
-          actionsCell.append(editButton, deleteButton);
-          row.appendChild(actionsCell);
+            actionsCell.append(editButton, deleteButton);
+            row.appendChild(actionsCell);
 
-          tblFuncionariosBody.appendChild(row);
-      });
-  }
+            tblFuncionariosBody.appendChild(row);
+        });
+    }
 
-  if (lastAddedFuncId) {
-    tblFuncionariosBody.querySelector(`tr[data-func-id="${lastAddedFuncId}"]`)?.classList.add('new-item');
-    lastAddedFuncId = null;
-  }
+    if (lastAddedFuncId) {
+        tblFuncionariosBody.querySelector(`tr[data-func-id="${lastAddedFuncId}"]`)?.classList.add('new-item');
+        lastAddedFuncId = null;
+    }
 }
 
-
 function validateFuncForm() {
+    $$('.invalid-label', funcNomeInput.closest('.card')).forEach(el => el.classList.remove('invalid-label'));
     const isNomeValid = validateInput(funcNomeInput);
     const isCargoValid = validateInput(funcCargoSelect);
     const isCargaValid = validateInput(funcCargaHorariaInput);
-    
+
     return isNomeValid && isCargoValid && isCargaValid;
 }
 
@@ -349,64 +360,66 @@ function saveFuncFromForm() {
         documento,
         disponibilidade,
     };
-    
+
     if (!editingFuncId) {
         lastAddedFuncId = funcData.id;
     }
 
     store.dispatch('SAVE_FUNCIONARIO', funcData);
-    
+
     cancelEditFunc();
     showToast("Funcionário salvo com sucesso!");
 }
 
 function editFuncInForm(id) {
-  const { funcionarios } = store.getState();
-  const func = funcionarios.find(f => f.id === id);
-  if (!func) return;
+    const { funcionarios } = store.getState();
+    const func = funcionarios.find(f => f.id === id);
+    if (!func) return;
 
-  cancelEditFunc();
-  editingFuncId = id;
+    cancelEditFunc();
+    editingFuncId = id;
 
-  funcNomeInput.value = func.nome;
-  funcCargoSelect.value = func.cargoId;
-  funcCargaHorariaInput.value = func.cargaHoraria || '';
-  funcDocumentoInput.value = func.documento || '';
-  
-  $(`button[data-value="${func.tipoContrato || 'clt'}"`, contratoToggleGroup).click();
-  $(`button[data-value="${func.periodoHoras || 'semanal'}"`, periodoHorasToggleGroup).click();
-  $(`button[data-value="${func.fazHoraExtra ? 'sim' : 'nao'}"`, horaExtraToggleGroup).click();
+    funcNomeInput.value = func.nome;
+    funcCargoSelect.value = func.cargoId;
+    funcCargaHorariaInput.value = func.cargaHoraria || '';
+    funcDocumentoInput.value = func.documento || '';
 
-  funcDisponibilidadeTemporaria = JSON.parse(JSON.stringify(func.disponibilidade || {}));
-  renderFuncTurnosForCargo(); 
+    $(`.toggle-btn[data-value="${func.tipoContrato || 'clt'}"]`, contratoToggleGroup).click();
+    $(`.toggle-btn[data-value="${func.periodoHoras || 'semanal'}"]`, periodoHorasToggleGroup).click();
+    $(`.toggle-btn[data-value="${func.fazHoraExtra ? 'sim' : 'nao'}"]`, horaExtraToggleGroup).click();
 
-  btnSalvarFunc.textContent = "💾 Salvar Alterações";
-  btnCancelarEdFunc.classList.remove("hidden");
-  setFuncFormDirty(false);
-  window.scrollTo(0, 0);
+    funcDisponibilidadeTemporaria = JSON.parse(JSON.stringify(func.disponibilidade || {}));
+    renderFuncTurnosForCargo();
+
+    btnSalvarFunc.textContent = "💾 Salvar Alterações";
+    btnCancelarEdFunc.classList.remove("hidden");
+    setFuncFormDirty(false);
+    window.scrollTo(0, 0);
 }
 
 function cancelEditFunc() {
-  editingFuncId = null;
-  funcNomeInput.value = "";
-  funcCargoSelect.value = "";
-  funcCargaHorariaInput.value = "";
-  funcDocumentoInput.value = "";
-  
-  funcNomeInput.classList.remove('invalid');
-  funcCargoSelect.classList.remove('invalid');
-  funcCargaHorariaInput.classList.remove('invalid');
-  
-  $(`button[data-value="clt"]`, contratoToggleGroup).click();
-  $(`button[data-value="semanal"]`, periodoHorasToggleGroup).click();
-  $(`button[data-value="nao"]`, horaExtraToggleGroup).click();
-  
-  funcDisponibilidadeTemporaria = {};
-  funcTurnosContainer.innerHTML = `<div class="turno-placeholder"><p>Selecione um cargo para ver os turnos disponíveis.</p></div>`;
+    editingFuncId = null;
+    funcNomeInput.value = "";
+    funcCargoSelect.value = "";
+    funcCargaHorariaInput.value = "";
+    funcDocumentoInput.value = "";
 
-  btnSalvarFunc.textContent = "💾 Salvar Funcionário";
-  btnCancelarEdFunc.classList.add("hidden");
-  setFuncFormDirty(false);
+    $$('.invalid', funcNomeInput.closest('.card')).forEach(el => el.classList.remove('invalid'));
+    $$('.invalid-label', funcNomeInput.closest('.card')).forEach(el => el.classList.remove('invalid-label'));
+
+    // CORREÇÃO: Garante que o estado visual do toggle seja resetado
+    $(`.toggle-btn[data-value="clt"]`, contratoToggleGroup).click();
+    $(`.toggle-btn[data-value="semanal"]`, periodoHorasToggleGroup).click();
+    $(`.toggle-btn[data-value="nao"]`, horaExtraToggleGroup).click();
+
+    funcDisponibilidadeTemporaria = {};
+    funcTurnosContainer.innerHTML = `<div class="turno-placeholder"><p>Selecione um cargo para ver os turnos disponíveis.</p></div>`;
+
+    btnSalvarFunc.textContent = "💾 Salvar Funcionário";
+    btnCancelarEdFunc.classList.add("hidden");
+    setFuncFormDirty(false);
+
+    funcNomeInput.focus();
 }
 
 function deleteFuncionario(id) {
@@ -417,6 +430,10 @@ function deleteFuncionario(id) {
     });
 }
 
+// Inicialização
 btnSalvarFunc.onclick = saveFuncFromForm;
 btnCancelarEdFunc.onclick = cancelEditFunc;
 $("#btnLimparFunc").onclick = cancelEditFunc;
+$(`.toggle-btn[data-value="clt"]`, contratoToggleGroup).click();
+$(`.toggle-btn[data-value="semanal"]`, periodoHorasToggleGroup).click();
+$(`.toggle-btn[data-value="nao"]`, horaExtraToggleGroup).click();

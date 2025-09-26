@@ -15,7 +15,7 @@ function renderEscalasList(){
     </div>`;
     return;
   }
-  
+
   const escalasOrdenadas = [...escalas].sort((a,b) => b.inicio.localeCompare(a.inicio));
 
   escalasOrdenadas.forEach(esc => {
@@ -45,10 +45,10 @@ function verEscalaSalva(id) {
         // Usa a função genérica para renderizar a tabela
         const container = $("#escalaSalvaTabelaWrap");
         renderGenericEscalaTable(escala, container, { isInteractive: false });
-        
+
         // Renderiza a legenda para a escala salva
         renderEscalaLegend(escala, $("#escalaSalvaViewLegenda"));
-        
+
         const turnosVagos = escala.slots.filter(s => !s.assigned).length;
         $("#escalaSalvaResumo").innerHTML = `<strong>Resumo:</strong> ${turnosVagos > 0 ? `<span style="color:red;">${turnosVagos} turnos vagos.</span>` : 'Todos os turnos foram preenchidos.'}`;
         $("#escalaSalvaViewTitle").textContent = escala.nome || 'Visualização da Escala';
@@ -59,11 +59,11 @@ function verEscalaSalva(id) {
 }
 
 async function excluirEscalaSalva(id){
-  const confirmado = await showConfirm({ title: "Excluir Escala Salva?", message: "Tem certeza que deseja excluir esta escala permanentemente?" });
-  if (confirmado) {
-      store.dispatch('DELETE_ESCALA_SALVA', id);
-      showToast("Escala excluída.");
-  }
+  handleDeleteItem({
+      id: id,
+      itemName: 'Escala Salva',
+      dispatchAction: 'DELETE_ESCALA_SALVA'
+  });
 }
 
 // Lógica do botão de voltar

@@ -1,0 +1,357 @@
+/**************************************
+ * 🎨 Estilos do Editor Manual v3.3 (Fluxo Otimizado)
+ **************************************/
+
+#editor-toolbox {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    width: 400px;
+    z-index: 100;
+    border-radius: 28px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 100px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+#editor-toolbox::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    margin: -1px;
+    border-radius: inherit;
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.1));
+}
+
+html[data-theme="dark"] #editor-toolbox {
+    background: rgba(42, 42, 48, 0.5);
+}
+
+html[data-theme="dark"] #editor-toolbox::before {
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+}
+
+#editor-toolbox.hidden {
+    transform: translateX(120%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* --- Seletor de Modo --- */
+.toolbox-mode-selector {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toolbox-mode-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-right: auto;
+}
+
+.toolbox-mode-buttons {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+}
+
+.toolbox-mode-btn {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    border: none;
+    transition: all 0.25s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.toolbox-mode-btn.active {
+    background-color: var(--card);
+    color: var(--brand);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="dark"] .toolbox-mode-selector {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- Cabeçalho e Tipografia --- */
+.toolbox-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+html[data-theme="dark"] .toolbox-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toolbox-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+}
+
+.toolbox-subtitle {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin: 0;
+}
+
+.toolbox-back-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--muted);
+}
+
+.toolbox-back-btn:hover {
+    color: var(--fg);
+}
+
+.toolbox-header.with-back-btn .toolbox-title,
+.toolbox-header.with-back-btn .toolbox-subtitle {
+    padding-left: 24px;
+}
+
+/* --- Conteúdo Principal --- */
+.toolbox-content {
+    padding: 16px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* --- Paleta de Funcionários --- */
+.employee-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.employee-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border-radius: 16px;
+    transition: all 0.25s ease-out;
+    border: 1px solid transparent;
+    background-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+
+html[data-theme="dark"] .employee-card {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.employee-card.active {
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    border-color: rgba(37, 99, 235, 0.5);
+}
+
+@keyframes pulse-glow {
+    from {
+        box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    }
+
+    to {
+        box-shadow: 0 0 20px 4px rgba(37, 99, 235, 0.2);
+    }
+}
+
+.employee-card.is-armed {
+    animation: pulse-glow 2.5s infinite alternate ease-in-out;
+}
+
+.employee-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-out;
+    position: relative;
+}
+
+.employee-card-header:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme="dark"] .employee-card-header:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.employee-card-header::after {
+    content: '›';
+    position: absolute;
+    right: 16px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--muted);
+    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.employee-card.is-expanded .employee-card-header::after {
+    transform: rotate(90deg);
+}
+
+.employee-info h5 {
+    margin: 0 0 4px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.employee-stats {
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+/* --- Paleta de Turnos --- */
+.employee-shift-palette {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 16px;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    border-top: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.employee-card.is-expanded .employee-shift-palette {
+    max-height: 200px;
+    opacity: 1;
+    padding: 16px;
+    border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="dark"] .employee-card.is-expanded .employee-shift-palette {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.shift-palette-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0;
+}
+
+.shift-brushes-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.shift-brush {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #1e293b;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.shift-brush:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.shift-brush.selected {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px var(--card), 0 0 12px 3px var(--brand);
+}
+
+/* --- Ações e Botões --- */
+.toolbox-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toolbox-actions.is-palette {
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* Estilo para botões com ícone e texto */
+.toolbox-actions.is-palette button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+}
+
+/* --- Estilos na Tabela --- */
+.escala-final-table .editable-cell {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.escala-final-table .editable-cell:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--brand);
+    opacity: 0.1;
+}
+
+.escala-final-table .editable-cell.selected {
+    box-shadow: inset 0 0 0 2px var(--brand), 0 0 12px var(--brand);
+}
+
+.escala-final-table tr.employee-row-highlight>td {
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.escala-final-table.employee-paint-mode .editable-cell:hover::after {
+    background: var(--brand);
+    opacity: 0.2;
+}
+
+.escala-final-table.employee-paint-mode {
+    cursor: cell;
+}

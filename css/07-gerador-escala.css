@@ -2,7 +2,9 @@
  * 📅 Estilos da Tela de Geração de Escala
  **************************************/
 
-#page-gerar-escala h1, #page-escalas-salvas h1, #page-configuracoes h1 {
+#page-gerar-escala h1,
+#page-escalas-salvas h1,
+#page-configuracoes h1 {
     padding: 0 16px;
 }
 
@@ -21,15 +23,18 @@
     padding: 8px;
     border-bottom: 1px solid var(--border);
 }
+
 #page-gerar-escala .cobertura-item label {
     flex-grow: 1;
     font-weight: 500;
 }
+
 #page-gerar-escala .input-sm {
     min-width: 60px;
     max-width: 120px;
     padding: 6px;
 }
+
 #page-gerar-escala input[type="date"] {
     min-width: 130px;
 }
@@ -50,36 +55,44 @@
     border: 1px solid var(--border);
     border-radius: 8px;
 }
+
 .excecao-header {
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);
 }
+
 .excecao-body {
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
+
 .excecao-linha {
     padding-bottom: 12px;
     border-bottom: 1px solid var(--border);
 }
+
 .excecao-linha:last-child {
     border-bottom: none;
     padding-bottom: 0;
 }
+
 .excecao-linha label {
     font-weight: 500;
 }
+
 .dates-container.hidden {
     display: none !important;
 }
+
 .dates-container {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
 }
+
 .dias-resumo {
     font-size: 0.9rem;
     font-weight: 500;
@@ -87,13 +100,17 @@
     margin-left: auto;
     white-space: nowrap;
 }
-.folgas-tags, .feriados-tags {
+
+.folgas-tags,
+.feriados-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 8px;
 }
-.folgas-tags .tag, .feriados-tags .tag {
+
+.folgas-tags .tag,
+.feriados-tags .tag {
     background-color: var(--card);
     border: 1px solid var(--border);
     padding: 4px 8px;
@@ -103,15 +120,19 @@
     align-items: center;
     gap: 6px;
 }
+
 .folgas-tags .tag[data-tipo-folga="Atestado Médico"] {
     background-color: #fecaca;
     border-color: #f87171;
 }
+
 .folgas-tags .tag[data-tipo-folga="Folga Aniversário"] {
     background-color: #d9f99d;
     border-color: #a3e635;
 }
-.folgas-tags .tag button, .feriados-tags .tag button {
+
+.folgas-tags .tag button,
+.feriados-tags .tag button {
     background: none;
     border: none;
     color: var(--danger);
@@ -120,67 +141,119 @@
     line-height: 1;
 }
 
-/* --- ESTILOS CORRIGIDOS PARA A VISUALIZAÇÃO DA ESCALA --- */
+/* --- ESTILOS DA VISUALIZAÇÃO DA ESCALA --- */
 
-#escalaView.hidden, #escalaSalvaView.hidden {
+#escalaView.hidden,
+#escalaSalvaView.hidden {
     display: none !important;
 }
 
-#escalaTabelaWrap, #escalaSalvaTabelaWrap {
+#escalaTabelaWrap,
+#escalaSalvaTabelaWrap {
     overflow-x: auto;
 }
 
 .escala-final-table {
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .escala-final-table th,
 .escala-final-table td {
     border: 1px solid var(--border);
-    padding: 6px;
+    padding: 6px 2px;
     text-align: center;
-    min-width: 80px;
+    min-width: 50px;
+    /* ALTERAÇÃO: Células ainda mais estreitas */
 }
+
 .escala-final-table th {
     background-color: var(--bg);
     font-weight: 600;
 }
+
+.escala-final-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
 .escala-final-table th.weekend {
     background-color: #f1f5f9;
 }
+
 html[data-theme="dark"] .escala-final-table th.weekend {
     background-color: #2d3748;
 }
+
 .escala-final-table th.feriado {
     background-color: #dbeafe;
     color: var(--brand);
 }
+
 html[data-theme="dark"] .escala-final-table th.feriado {
     background-color: var(--brand-2);
     color: #e0eaff;
 }
-/* COLUNA FIXA (STICKY) */
+
 .escala-final-table th:first-child,
 .escala-final-table td:first-child,
 .escala-final-table tfoot td:first-child {
     position: sticky;
     left: 0;
     z-index: 1;
-    background-color: var(--bg); 
+    background-color: var(--bg);
     font-weight: 500;
     min-width: 150px;
     text-align: left;
     padding-left: 12px;
 }
+
+.escala-final-table tbody tr:nth-child(even) td:first-child {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
 .escala-final-table tfoot tr {
     background-color: var(--bg);
 }
+
 .escala-final-table tfoot td {
     font-size: 0.85rem;
     white-space: pre-wrap;
     line-height: 1.4;
     font-weight: 500;
+}
+
+.escala-final-table tfoot .vagas-row {
+    background-color: #fffbe5;
+}
+
+html[data-theme="dark"] .escala-final-table tfoot .vagas-row {
+    background-color: #423c1b;
+}
+
+.escala-final-table tfoot .vagas-row td {
+    font-style: italic;
+    color: var(--muted);
+}
+
+.btn-add-vaga {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--brand);
+    color: var(--brand);
+    background-color: var(--card);
+    font-size: 1.2rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.btn-add-vaga:hover {
+    background-color: var(--brand);
+    color: #fff;
+    transform: scale(1.1);
 }
 
 .celula-turno {
@@ -189,14 +262,17 @@ html[data-theme="dark"] .escala-final-table th.feriado {
     cursor: pointer;
     transition: transform 0.2s;
 }
+
 .celula-turno:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
+
 .celula-turno-salva {
     font-weight: 500;
     color: var(--fg);
 }
+
 .celula-excecao {
     background-color: #e2e8f0;
     color: #475569;
@@ -204,70 +280,44 @@ html[data-theme="dark"] .escala-final-table th.feriado {
     font-size: 0.85rem;
     cursor: help;
 }
+
 .celula-excecao[data-tipo-folga="Atestado Médico"] {
     background-color: #fecaca;
 }
+
 .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     background-color: #d9f99d;
 }
+
 html[data-theme="dark"] .celula-excecao {
     background-color: #333;
     color: var(--muted);
 }
+
 html[data-theme="dark"] .celula-excecao[data-tipo-folga="Atestado Médico"] {
     background-color: #522c2c;
 }
+
 html[data-theme="dark"] .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     background-color: #365314;
 }
 
-/* Modal de Troca */
-.swap-modal-backdrop {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-.swap-modal-content {
-    background-color: var(--card);
-    padding: 24px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 350px;
-    box-shadow: var(--shadow);
-}
-.swap-list {
-    list-style: none;
-    padding: 0;
-    margin: 12px 0;
-    max-height: 200px;
-    overflow-y: auto;
-}
-.swap-list li button {
-    width: 100%;
-    background-color: var(--bg);
-    border: 1px solid var(--border);
-    padding: 10px;
-    margin-bottom: 6px;
-    border-radius: 8px;
-    text-align: left;
-}
-.swap-list li button:hover {
-    border-color: var(--brand);
-    color: var(--brand);
-}
-.swap-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 24px;
+/* ADIÇÃO: Animação de Flash para o resumo de horas */
+@keyframes flash {
+    from {
+        background-color: rgba(37, 99, 235, 0.2);
+    }
+
+    to {
+        background-color: transparent;
+    }
 }
 
-/* Novo layout dos botões da escala */
+.resumo-detalhado-item.flash-update {
+    animation: flash 1.5s ease-out;
+    border-radius: 4px;
+}
+
 .bottom-actions-container {
     display: flex;
     justify-content: flex-end;
@@ -275,22 +325,22 @@ html[data-theme="dark"] .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     margin-top: 16px;
 }
 
-#escalaView, #escalaSalvaView {
+#escalaView,
+#escalaSalvaView {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-
-/* Fieldset para regras */
 .regras-fieldset {
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
     margin-top: 12px;
-    background-color: var(--bg); /* Fundo sutil para agrupar */
-    height: 100%; /* Ocupa a altura da coluna do grid */
+    background-color: var(--bg);
+    height: 100%;
 }
+
 .regras-fieldset legend {
     font-weight: bold;
     color: var(--muted);
@@ -298,26 +348,27 @@ html[data-theme="dark"] .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     margin-left: 8px;
 }
 
-/* --- NOVOS ESTILOS PARA O GRID DO PASSO 1 e 2 --- */
-.passo1-grid, .passo2-grid {
+.passo1-grid,
+.passo2-grid {
     display: grid;
-    grid-template-columns: 1fr 1.2fr; /* Coluna da direita um pouco maior */
+    grid-template-columns: 1fr 1.2fr;
     gap: 24px;
     align-items: start;
     margin: 16px 0;
 }
+
 .regra-item {
     padding-bottom: 16px;
     margin-bottom: 16px;
     border-bottom: 1px solid var(--border);
 }
+
 .regra-item:last-child {
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
 }
 
-/* --- NOVOS ESTILOS PARA A LEGENDA DA ESCALA --- */
 .escala-legenda {
     display: flex;
     flex-wrap: wrap;
@@ -326,6 +377,7 @@ html[data-theme="dark"] .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     padding-top: 16px;
     border-top: 1px solid var(--border);
 }
+
 .legenda-item {
     display: flex;
     align-items: center;
@@ -336,10 +388,12 @@ html[data-theme="dark"] .celula-excecao[data-tipo-folga="Folga Aniversário"] {
     border: 1px solid var(--border);
     font-size: 0.9rem;
 }
+
 .legenda-item .color-dot {
     width: 14px;
     height: 14px;
 }
+
 .legenda-item strong {
     color: var(--brand);
 }

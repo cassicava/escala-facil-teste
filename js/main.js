@@ -28,16 +28,11 @@ function applyTheme(theme) {
 
 async function go(page) {
     const currentPageEl = $('.page.active');
-    // FALLBACK ADICIONADO: Garante que, se nenhuma página estiver ativa, a navegação funcione.
-    if (!currentPageEl) { 
-        $$(".page").forEach(p => p.classList.remove("active"));
-        $(`#page-${page}`).classList.add("active");
-        $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
-        return;
-    }
-
-    const currentPageId = currentPageEl.id.replace('page-', '');
+    const currentPageId = currentPageEl ? currentPageEl.id.replace('page-', '') : null;
     
+    // Se a navegação for para a mesma página, não faz nada
+    if (currentPageId === page) return;
+
     if (dirtyForms[currentPageId]) {
         const confirmado = await showConfirm({
             title: "Descartar Alterações?",
@@ -46,14 +41,14 @@ async function go(page) {
             cancelText: "Não, Ficar"
         });
         if (!confirmado) {
-            return; 
+            return;
         }
     }
 
-    if (currentPageId === 'gerar-escala' && geradorState.cargoId && page !== 'gerar-escala') {
+    if (currentPageId === 'gerar-escala' && geradorState.cargoId) {
         const confirmado = await showConfirm({
             title: "Sair da Geração de Escala?",
-            message: "Você tem certeza que deseja sair? Todos os dados não salvos nesta tela serão perdidos.",
+            message: "Você tem certeza que deseja sair? O progresso da escala atual será perdido.",
             confirmText: "Sim, Sair",
             cancelText: "Não, Ficar"
         });
@@ -77,7 +72,7 @@ async function go(page) {
             resetGeradorEscala();
             break;
     }
-    
+
     window.scrollTo(0, 0);
     $$(".page").forEach(p => p.classList.toggle("active", p.id === `page-${page}`));
     $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.page === page));
@@ -89,10 +84,10 @@ async function go(page) {
 
 function renderAll() {
     console.log("Estado atualizado. Re-renderizando componentes...");
-    
+
     const { cargos } = store.getState();
 
-    // --- ADIÇÃO: Verificação de segurança para o gerador de escala ---
+    // Verificação de segurança para o gerador de escala
     // Se o cargo selecionado no gerador foi excluído, reseta o assistente para evitar erros.
     if (geradorState.cargoId && !cargos.some(c => c.id === geradorState.cargoId)) {
         console.warn("Cargo selecionado no gerador não existe mais. Resetando o assistente.");
@@ -101,16 +96,19 @@ function renderAll() {
             showToast("O cargo selecionado foi excluído. Por favor, comece novamente.");
         }
     }
-    
+
+    // Renderiza as listas principais
     renderTurnos();
     renderCargos();
     renderFuncs();
     renderEscalasList();
-    
-    renderTurnosSelects();
-    renderFuncCargoSelect();
-    renderEscCargoSelect();
-    
+
+    // Renderiza componentes <select> e listas dinâmicas em outros formulários
+    renderTurnosSelects(); // Na pág. de Cargos
+    renderFuncCargoSelect(); // Na pág. de Funcionários
+    renderEscCargoSelect(); // Na pág. de Gerar Escala (BUG FIX)
+
+    // Atualiza outras partes da UI
     loadConfigForm();
     updateWelcomeMessage();
 }
@@ -119,15 +117,18 @@ function renderAll() {
 function initMainApp() {
     console.log("Iniciando aplicação principal...");
     store.subscribe(renderAll);
-  
+
     const { config } = store.getState();
     applyTheme(config.theme || 'light');
-  
+
     renderAll();
-    go("home");
+    go("home"); // Inicia na página home
 
     $$(".tab-btn").forEach(b => b.onclick = () => go(b.dataset.page));
-    $$(".home-card").forEach(c => c.onclick = () => go(c.dataset.goto));
+    $$(".home-card").forEach(c => c.onclick = (e) => {
+        e.preventDefault();
+        go(c.dataset.goto)
+    });
 }
 
 
@@ -138,6 +139,8 @@ function init() {
     if (!onboardingComplete) {
         initWelcomeScreen();
     } else {
+        // Esconde o overlay de boas-vindas para evitar flash de conteúdo
+        if(welcomeOverlay) welcomeOverlay.style.display = 'none';
         initMainApp();
     }
 }

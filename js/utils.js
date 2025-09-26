@@ -7,8 +7,8 @@ const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
 const uid = () => Math.random().toString(36).slice(2,10);
 
 function saveJSON(key, data){ localStorage.setItem(key, JSON.stringify(data)); }
-function loadJSON(key, fallback){ 
-  try { return JSON.parse(localStorage.getItem(key)) || fallback; } 
+function loadJSON(key, fallback){
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
   catch { return fallback; }
 }
 
@@ -31,6 +31,7 @@ function hideLoader() {
 
 
 function validateInput(inputElement, forceValid = false) {
+    if (!inputElement) return true; // Se o elemento não existe, não valida.
     const isValid = forceValid || inputElement.value.trim() !== '';
     inputElement.classList.toggle('invalid', !isValid);
     return isValid;
@@ -42,7 +43,7 @@ function calcCarga(inicio, fim, almocoMin) {
   const inicioMin = parseTimeToMinutes(inicio);
   const fimMin = parseTimeToMinutes(fim);
   let duracaoMin = fimMin - inicioMin;
-  if (duracaoMin < 0) {
+  if (duracaoMin < 0) { // Turno noturno
     const minutosEmUmDia = 24 * 60;
     duracaoMin = (minutosEmUmDia - inicioMin) + fimMin;
   }
@@ -64,7 +65,7 @@ function getFimDeSemanaNoMes(mesAno) {
     const diasNoMes = new Date(ano, mes, 0).getDate();
     const finsDeSemana = [];
     const semanas = new Set();
-    
+
     for (let dia = 1; dia <= diasNoMes; dia++) {
         const data = new Date(ano, mes - 1, dia);
         if (data.getDay() === 0 || data.getDay() === 6) { // 0 = Domingo, 6 = Sábado
@@ -89,8 +90,7 @@ function showToast(message) {
     }, 3000);
 }
 
-
-// --- FUNÇÃO CORRIGIDA ---
+// --- FUNÇÃO CORRIGIDA E MELHORADA ---
 function showConfirm({ title, message, confirmText = "Confirmar", cancelText = "Cancelar" }) {
     return new Promise((resolve) => {
         const backdrop = $("#modalBackdrop");
@@ -98,33 +98,27 @@ function showConfirm({ title, message, confirmText = "Confirmar", cancelText = "
         const modalCancelBtn = $("#modalCancel");
 
         $("#modalTitle").textContent = title;
-        $("#modalMessage").innerHTML = `<p>${message}</p>`;
+        $("#modalMessage").innerHTML = `<p>${message}</p>`; // Usando innerHTML para permitir tags como <strong>
         modalConfirmBtn.textContent = confirmText;
         modalCancelBtn.textContent = cancelText;
-        
+
         modalConfirmBtn.style.display = 'inline-flex';
         modalCancelBtn.style.display = 'inline-flex';
 
         backdrop.classList.remove("hidden");
 
-        const cleanup = () => {
+        const cleanupAndResolve = (value) => {
             modalConfirmBtn.removeEventListener('click', confirmHandler);
             modalCancelBtn.removeEventListener('click', cancelHandler);
-            $("#modalMessage").innerHTML = '';
+            $("#modalMessage").innerHTML = ''; // Limpa o conteúdo
+            backdrop.classList.add("hidden");
+            resolve(value);
         };
 
-        const confirmHandler = () => {
-            backdrop.classList.add("hidden");
-            resolve(true);
-            cleanup(); // A chamada para cleanup() foi adicionada aqui
-        };
+        const confirmHandler = () => cleanupAndResolve(true);
+        const cancelHandler = () => cleanupAndResolve(false);
 
-        const cancelHandler = () => {
-            backdrop.classList.add("hidden");
-            resolve(false);
-            cleanup(); // E aqui também, garantindo a limpeza
-        };
-        
+        // Adiciona os listeners
         modalConfirmBtn.addEventListener('click', confirmHandler);
         modalCancelBtn.addEventListener('click', cancelHandler);
     });
@@ -148,6 +142,7 @@ function showInfoModal({ title, contentHTML }) {
     const closeHandler = () => {
         backdrop.classList.add("hidden");
         modalCancelBtn.removeEventListener('click', closeHandler);
+        // Reseta o estado dos botões
         $("#modalConfirm").style.display = 'inline-flex';
         $("#modalMessage").innerHTML = '';
     };
@@ -160,7 +155,7 @@ async function showPromptConfirm({ title, message, promptLabel, requiredWord, co
         const backdrop = $("#modalBackdrop");
         const modalConfirmBtn = $("#modalConfirm");
         const modalCancelBtn = $("#modalCancel");
-        
+
         $("#modalTitle").textContent = title;
         $("#modalMessage").innerHTML = `
             <p>${message}</p>
@@ -181,35 +176,32 @@ async function showPromptConfirm({ title, message, promptLabel, requiredWord, co
 
         promptInput.addEventListener('input', inputHandler);
         backdrop.classList.remove("hidden");
-        
-        const confirmHandler = () => {
-            resolve(true);
-            cleanupAndClose();
-        };
-        const cancelHandler = () => {
-            resolve(false);
-            cleanupAndClose();
-        };
-        
-        const cleanupAndClose = () => {
+
+        const cleanupAndResolve = (value) => {
             promptInput.removeEventListener('input', inputHandler);
             modalConfirmBtn.removeEventListener('click', confirmHandler);
             modalCancelBtn.removeEventListener('click', cancelHandler);
             modalConfirmBtn.disabled = false;
             $("#modalMessage").innerHTML = '';
             backdrop.classList.add("hidden");
+            resolve(value);
         };
+
+        const confirmHandler = () => cleanupAndResolve(true);
+        const cancelHandler = () => cleanupAndResolve(false);
 
         modalConfirmBtn.addEventListener('click', confirmHandler);
         modalCancelBtn.addEventListener('click', cancelHandler);
     });
 }
 
+// --- FUNÇÃO MELHORADA PARA EXCLUSÃO ---
+async function handleDeleteItem({ id, itemName, dispatchAction, additionalInfo = '' }) {
+    let message = `Atenção: esta ação é permanente e não pode ser desfeita. Excluir este ${itemName.toLowerCase()} pode afetar outras partes do sistema. ${additionalInfo} Deseja continuar?`;
 
-async function handleDeleteItem({ id, itemName, dispatchAction }) {
     const confirmado = await showConfirm({
         title: `Confirmar Exclusão de ${itemName}?`,
-        message: "Atenção: esta ação é permanente e não pode ser desfeita. Excluir este item pode afetar outras partes do sistema. Deseja continuar?"
+        message: message
     });
 
     if (confirmado) {

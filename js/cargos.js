@@ -1,5 +1,5 @@
 /**************************************
- * 🏢 Cargos
+ * 🏥 Cargos
  **************************************/
 
 let editingCargoId = null;
@@ -10,6 +10,7 @@ const cargoNomeInput = $("#cargoNome");
 const filtroCargosInput = $("#filtroCargos");
 const cargoTurnosContainer = $("#cargoTurnosContainer");
 const cargoDiasContainer = $("#cargoDiasContainer");
+const cargoHorarioToggle = $("#cargoHorarioToggle");
 const cargoIs24hInput = $("#cargoIs24h");
 const cargoHorarioInputsContainer = $("#cargoHorarioInputs");
 const cargoInicioInput = $("#cargoInicio");
@@ -23,46 +24,57 @@ function setCargoFormDirty(isDirty) {
     dirtyForms.cargos = isDirty;
 }
 
+function validateInput(inputElement, forceValid = false) {
+    const isValid = forceValid || inputElement.value.trim() !== '';
+    inputElement.classList.toggle('invalid', !isValid);
+    const label = inputElement.closest('label');
+    if (label) {
+        label.classList.toggle('invalid-label', !isValid);
+    }
+    return isValid;
+}
+
+
 // --- LÓGICA DO FORMULÁRIO ---
 
 cargoNomeInput.addEventListener("input", (e) => {
-  const input = e.target;
-  if (input.value.length > 0) {
-    input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
-  }
-  validateInput(input, input.value.trim() !== '');
-  setCargoFormDirty(true);
+    const input = e.target;
+    if (input.value.length > 0) {
+        input.value = input.value.charAt(0).toUpperCase() + input.value.slice(1);
+    }
+    validateInput(input, input.value.trim() !== '');
+    setCargoFormDirty(true);
 });
 
 filtroCargosInput.addEventListener("input", () => {
     renderCargos();
 });
 
-function renderTurnosSelects(){
-  const { turnos } = store.getState();
-  cargoTurnosContainer.innerHTML = '';
+function renderTurnosSelects() {
+    const { turnos } = store.getState();
+    cargoTurnosContainer.innerHTML = '';
 
-  if (turnos.length === 0) {
-    const p = document.createElement('p');
-    p.className = 'muted';
-    p.innerHTML = `Nenhum turno cadastrado. <a href="#" onclick="go('turnos')">Cadastre um turno primeiro</a>.`;
-    cargoTurnosContainer.appendChild(p);
-    return;
-  }
-  
-  const turnosOrdenados = [...turnos].sort((a, b) => a.nome.localeCompare(b.nome));
+    if (turnos.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'muted';
+        p.innerHTML = `Nenhum turno cadastrado. <a href="#" onclick="go('turnos')">Cadastre um turno primeiro</a>.`;
+        cargoTurnosContainer.appendChild(p);
+        return;
+    }
 
-  turnosOrdenados.forEach(t => {
-    const lbl = document.createElement("label");
-    lbl.className = "check-inline";
-    lbl.innerHTML = `
+    const turnosOrdenados = [...turnos].sort((a, b) => a.nome.localeCompare(b.nome));
+
+    turnosOrdenados.forEach(t => {
+        const lbl = document.createElement("label");
+        lbl.className = "check-inline";
+        lbl.innerHTML = `
         <input type="checkbox" name="cargoTurno" value="${t.id}">
         <span class="color-dot" style="background-color: ${t.cor || '#e2e8f0'}"></span>
         ${t.nome} (${t.inicio}-${t.fim})
     `;
-    lbl.addEventListener('change', () => setCargoFormDirty(true));
-    cargoTurnosContainer.appendChild(lbl);
-  });
+        lbl.addEventListener('change', () => setCargoFormDirty(true));
+        cargoTurnosContainer.appendChild(lbl);
+    });
 }
 
 function renderDiasSemanaCargo() {
@@ -84,13 +96,13 @@ function renderDiasSemanaCargo() {
     });
 }
 
-$$('#cargoHorarioToggle .toggle-btn').forEach(button => {
+$$('.toggle-btn', cargoHorarioToggle).forEach(button => {
     button.onclick = () => {
-        $$('#cargoHorarioToggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
+        $$('.toggle-btn', cargoHorarioToggle).forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
         const tipo = button.dataset.value;
         cargoIs24hInput.value = tipo;
-        
+
         if (tipo === '24h') {
             cargoHorarioInputsContainer.classList.add('hidden-height');
         } else {
@@ -120,7 +132,7 @@ function updateCargoRegrasExplicacao() {
 
 // --- RENDERIZAÇÃO DA TABELA ---
 
-function renderCargos(){
+function renderCargos() {
     const { cargos, funcionarios, turnos } = store.getState();
     const filtro = filtroCargosInput.value.toLowerCase();
 
@@ -133,8 +145,8 @@ function renderCargos(){
         const row = document.createElement('tr');
         const cell = document.createElement('td');
         cell.colSpan = 4;
-        if (filtro.length === 0) {
-            cell.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏢</div>
+        if (filtro.length === 0 && cargos.length === 0) {
+            cell.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏥</div>
                 <h3>Nenhum Cargo Cadastrado</h3>
                 <p>Crie cargos e associe turnos a eles para poder cadastrar funcionários.</p>
             </div>`;
@@ -152,7 +164,7 @@ function renderCargos(){
     cargosOrdenados.forEach(c => {
         const numFuncionarios = funcionarios.filter(f => f.cargoId === c.id).length;
         const nomesTurnos = (c.turnosIds || []).map(id => turnosMap[id]?.nome || "—").join(", ") || 'Nenhum';
-        
+
         let funcionamento = 'Não definido';
         if (c.regras && c.regras.dias.length > 0) {
             const dias = c.regras.dias.map(d => DIAS_SEMANA.find(dia => dia.id === d)?.abrev).join(', ') || '';
@@ -169,7 +181,7 @@ function renderCargos(){
         spanMuted.className = 'muted';
         spanMuted.textContent = ` (${numFuncionarios})`;
         tdNome.appendChild(spanMuted);
-        
+
         const tdTurnos = document.createElement('td');
         tdTurnos.textContent = nomesTurnos;
 
@@ -179,14 +191,12 @@ function renderCargos(){
         const tdAcoes = document.createElement('td');
         const btnEdit = document.createElement('button');
         btnEdit.className = 'secondary';
-        // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
         btnEdit.setAttribute('aria-label', `Editar cargo ${c.nome}`);
         btnEdit.innerHTML = '✏️ Editar';
         btnEdit.onclick = () => editCargoInForm(c.id);
 
         const btnDel = document.createElement('button');
         btnDel.className = 'danger';
-        // ALTERAÇÃO: Adicionado aria-label para acessibilidade.
         btnDel.setAttribute('aria-label', `Excluir cargo ${c.nome}`);
         btnDel.innerHTML = '🔥 Excluir';
         btnDel.onclick = () => deleteCargo(c.id);
@@ -206,103 +216,103 @@ function renderCargos(){
 // --- AÇÕES PRINCIPAIS ---
 
 function saveCargoFromForm() {
-  const nome = cargoNomeInput.value.trim();
-  const turnosIds = $$('input[name="cargoTurno"]:checked').map(chk => chk.value);
-  
-  if (!nome || turnosIds.length === 0) {
-    showToast("O nome do cargo e pelo menos um turno são obrigatórios.");
-    if (!nome) cargoNomeInput.classList.add('invalid');
-    return;
-  }
-  
-  const { cargos } = store.getState();
-  if (cargos.some(c => c.nome.toLowerCase() === nome.toLowerCase() && c.id !== editingCargoId)) {
-      return showToast("Já existe um cargo com este nome.");
-  }
-  
-  const cargoData = {
-      id: editingCargoId || uid(),
-      nome,
-      turnosIds,
-      regras: {
-          dias: $$('input[name="cargoDias"]:checked').map(chk => chk.value),
-          is24h: cargoIs24hInput.value === '24h',
-          inicio: cargoInicioInput.value,
-          fim: cargoFimInput.value,
-      }
-  };
-  
-  if (!editingCargoId) {
-    lastAddedCargoId = cargoData.id;
-  }
+    const nome = cargoNomeInput.value.trim();
+    const turnosIds = $$('input[name="cargoTurno"]:checked').map(chk => chk.value);
 
-  store.dispatch('SAVE_CARGO', cargoData);
-  
-  cancelEditCargo();
-  showToast("Cargo salvo com sucesso!");
+    if (!nome || turnosIds.length === 0) {
+        showToast("O nome do cargo e pelo menos um turno são obrigatórios.");
+        if (!nome) validateInput(cargoNomeInput);
+        return;
+    }
+
+    const { cargos } = store.getState();
+    if (cargos.some(c => c.nome.toLowerCase() === nome.toLowerCase() && c.id !== editingCargoId)) {
+        return showToast("Já existe um cargo com este nome.");
+    }
+
+    const cargoData = {
+        id: editingCargoId || uid(),
+        nome,
+        turnosIds,
+        regras: {
+            dias: $$('input[name="cargoDias"]:checked').map(chk => chk.value),
+            is24h: cargoIs24hInput.value === '24h',
+            inicio: cargoInicioInput.value,
+            fim: cargoFimInput.value,
+        }
+    };
+
+    if (!editingCargoId) {
+        lastAddedCargoId = cargoData.id;
+    }
+
+    store.dispatch('SAVE_CARGO', cargoData);
+
+    cancelEditCargo();
+    showToast("Cargo salvo com sucesso!");
 }
 
 function editCargoInForm(id) {
-  const { cargos } = store.getState();
-  const cargo = cargos.find(c => c.id === id);
-  if (!cargo) return;
+    const { cargos } = store.getState();
+    const cargo = cargos.find(c => c.id === id);
+    if (!cargo) return;
 
-  cancelEditCargo();
-  editingCargoId = id;
-  
-  cargoNomeInput.value = cargo.nome;
-  $$('input[name="cargoTurno"]').forEach(chk => chk.checked = (cargo.turnosIds || []).includes(chk.value));
+    cancelEditCargo();
+    editingCargoId = id;
 
-  if (cargo.regras) {
-      $$('input[name="cargoDias"]').forEach(chk => chk.checked = cargo.regras.dias.includes(chk.value));
-      const tipoHorario = cargo.regras.is24h ? '24h' : 'parcial';
-      $(`#cargoHorarioToggle .toggle-btn[data-value="${tipoHorario}"]`).click();
-      cargoInicioInput.value = cargo.regras.inicio || '';
-      cargoFimInput.value = cargo.regras.fim || '';
-  }
+    cargoNomeInput.value = cargo.nome;
+    $$('input[name="cargoTurno"]').forEach(chk => chk.checked = (cargo.turnosIds || []).includes(chk.value));
 
-  updateCargoRegrasExplicacao();
-  btnSalvarCargo.textContent = "💾 Salvar Alterações";
-  btnCancelarEdCargo.classList.remove("hidden");
-  setCargoFormDirty(false); 
-  window.scrollTo(0, 0);
+    if (cargo.regras) {
+        $$('input[name="cargoDias"]').forEach(chk => chk.checked = cargo.regras.dias.includes(chk.value));
+        const tipoHorario = cargo.regras.is24h ? '24h' : 'parcial';
+        $(`.toggle-btn[data-value="${tipoHorario}"]`, cargoHorarioToggle).click();
+        cargoInicioInput.value = cargo.regras.inicio || '';
+        cargoFimInput.value = cargo.regras.fim || '';
+    }
+
+    updateCargoRegrasExplicacao();
+    btnSalvarCargo.textContent = "💾 Salvar Alterações";
+    btnCancelarEdCargo.classList.remove("hidden");
+    setCargoFormDirty(false);
+    window.scrollTo(0, 0);
 }
 
 function cancelEditCargo() {
-  editingCargoId = null;
-  cargoNomeInput.value = "";
-  cargoNomeInput.classList.remove('invalid');
-  $$('input[name="cargoTurno"]').forEach(chk => chk.checked = false);
-  
-  $$('input[name="cargoDias"]').forEach(chk => chk.checked = false);
-  $(`#cargoHorarioToggle .toggle-btn[data-value="24h"]`).click();
-  cargoInicioInput.value = "";
-  cargoFimInput.value = "";
-  updateCargoRegrasExplicacao();
+    editingCargoId = null;
+    cargoNomeInput.value = "";
+    validateInput(cargoNomeInput, true);
+    $$('input[name="cargoTurno"]').forEach(chk => chk.checked = false);
 
-  btnSalvarCargo.textContent = "💾 Salvar Cargo";
-  btnCancelarEdCargo.classList.add("hidden");
-  setCargoFormDirty(false);
+    $$('input[name="cargoDias"]').forEach(chk => chk.checked = false);
+    // CORREÇÃO: Garante que o estado visual do toggle seja resetado
+    $(`.toggle-btn[data-value="24h"]`, cargoHorarioToggle).click();
+    cargoInicioInput.value = "";
+    cargoFimInput.value = "";
+    updateCargoRegrasExplicacao();
+
+    btnSalvarCargo.textContent = "💾 Salvar Cargo";
+    btnCancelarEdCargo.classList.add("hidden");
+    setCargoFormDirty(false);
+
+    cargoNomeInput.focus();
 }
 
 async function deleteCargo(id) {
     const { escalas } = store.getState();
     const escalasAfetadas = escalas.filter(e => e.cargoId === id);
-    let message = "Atenção: esta ação é permanente e não pode ser desfeita. Excluir este item pode afetar outras partes do sistema. Deseja continuar?";
+    let additionalInfo = 'Os funcionários associados a ele ficarão sem cargo definido.';
 
     if (escalasAfetadas.length > 0) {
-        message = `Atenção: existem <strong>${escalasAfetadas.length} escala(s) salva(s)</strong> associada(s) a este cargo. Ao excluir o cargo, <strong>todas essas escalas também serão excluídas.</strong> Esta ação é permanente. Deseja continuar?`;
+        additionalInfo += ` Além disso, <strong>${escalasAfetadas.length} escala(s) salva(s)</strong> associada(s) a este cargo serão <strong>excluídas permanentemente.</strong>`;
     }
 
-    const confirmado = await showConfirm({
-        title: `Confirmar Exclusão de Cargo?`,
-        message: message
+    handleDeleteItem({
+        id,
+        itemName: 'Cargo',
+        dispatchAction: 'DELETE_CARGO',
+        additionalInfo
     });
-
-    if (confirmado) {
-        store.dispatch('DELETE_CARGO', id);
-        showToast(`Cargo e ${escalasAfetadas.length} escala(s) associada(s) foram excluídos.`);
-    }
 }
 
 
@@ -318,3 +328,5 @@ cargoHorarioInputs.forEach(sel => sel.addEventListener('input', () => {
 }));
 
 renderDiasSemanaCargo();
+// CORREÇÃO: Garante o estado inicial correto do toggle de horário
+$(`.toggle-btn[data-value="24h"]`, cargoHorarioToggle).click();

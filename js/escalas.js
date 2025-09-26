@@ -4,7 +4,7 @@
 // Este arquivo agora atua como um orquestrador
 // Ele define o estado global do gerador e conecta as funções dos outros módulos.
 let currentEscala = null;
-let geradorState = { 
+let geradorState = {
     excecoes: {},
     feriados: [],
     maxDiasConsecutivos: 6,
@@ -16,6 +16,14 @@ let geradorState = {
 function resetGeradorEscala() {
     geradorState = { cargoId: null, excecoes: {}, feriados: [], maxDiasConsecutivos: 6, minFolgasFimSemana: 2, otimizarFolgas: false };
     currentEscala = null;
+
+    if (typeof editorState !== 'undefined') {
+        editorState.isEditMode = false;
+        editorState.selectedCell = null;
+        editorState.currentEscala = null;
+        editorState.selectedEmployeeBrush = null;
+    }
+
     $("#escalaView").classList.add('hidden');
     $("#gerador-container").classList.remove('hidden');
     $$("#gerador-container .wizard-step").forEach(step => step.classList.remove('active'));
@@ -24,16 +32,18 @@ function resetGeradorEscala() {
     $("#escIni").value = '';
     $("#escFim").value = '';
     $('#escFim').disabled = true;
-    updateEscalaResumoDias(); 
+    updateEscalaResumoDias();
     $$('#passo1-selecao .invalid').forEach(el => el.classList.remove('invalid'));
     $("#cobertura-turnos-container").innerHTML = '';
     $("#excecoes-funcionarios-container").innerHTML = '';
-    $("#minFolgasFimSemana").value = 2; 
-    renderFeriadosTags();
+    $("#minFolgasFimSemana").value = 2;
+    resetHolidays();
     $('#otimizar-folgas-toggle .toggle-btn[data-value="nao"]').click();
     if ($("#feriados-fieldset")) {
         $("#feriados-fieldset").disabled = true;
     }
+    const toolbox = $("#editor-toolbox");
+    if(toolbox) toolbox.classList.add("hidden");
 }
 
 function navigateWizard(targetStep) {
@@ -63,13 +73,30 @@ function resetHolidays() {
     renderFeriadosTags();
     $('#feriado-data-input').value = '';
     $('#feriado-nome-input').value = '';
+    $('#feriado-horas-desconto').value = '';
+    // CORREÇÃO DEFINITIVA: Chama a função que força o estado
+    setDescontarHorasToggleState('nao');
 }
+
+// ADIÇÃO: Nova função para forçar o estado visual do toggle
+function setDescontarHorasToggleState(value) {
+    const feriadoDescontarToggle = $('#feriado-descontar-toggle');
+    const feriadoHorasDescontoContainer = $('#feriado-horas-desconto-container');
+    
+    $$('.toggle-btn', feriadoDescontarToggle).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === value);
+    });
+    
+    const showHorasInput = value === 'sim';
+    feriadoHorasDescontoContainer.style.display = showHorasInput ? 'flex' : 'none';
+}
+
 
 // Funções de inicialização e eventos
 function setupEscalas() {
     const escIniInput = $("#escIni");
     const escFimInput = $("#escFim");
-    
+
     escIniInput.onclick = () => escIniInput.showPicker();
     escFimInput.onclick = () => escFimInput.showPicker();
     $('#feriado-data-input').onclick = () => $('#feriado-data-input').showPicker();
@@ -78,8 +105,7 @@ function setupEscalas() {
     $("#btn-back-passo1").onclick = () => navigateWizard('passo1-selecao');
     $("#btn-goto-passo3").onclick = () => handleGoToPasso3();
     $("#btn-back-passo2").onclick = () => navigateWizard('passo2-cobertura');
-    
-    // ALTERAÇÃO: A chamada agora é assíncrona
+
     $("#btnGerarEscala").onclick = async () => {
         await gerarEscala();
     };
@@ -88,10 +114,12 @@ function setupEscalas() {
         $("#escalaView").classList.add('hidden');
         $("#gerador-container").classList.remove('hidden');
         navigateWizard('passo3-excecoes');
+        const toolbox = $("#editor-toolbox");
+        if(toolbox) toolbox.classList.add("hidden");
     };
 
     $("#escCargo").onchange = () => $("#escCargo").classList.remove('invalid');
-    
+
     escIniInput.onchange = () => {
         escIniInput.classList.remove('invalid');
         if (escIniInput.value) {
@@ -116,22 +144,18 @@ function setupEscalas() {
     };
 
     $('#btn-add-feriado').onclick = () => addFeriado();
-    
+
     $$('#feriado-trabalha-toggle .toggle-btn').forEach(button => {
         button.onclick = () => {
             $$('#feriado-trabalha-toggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
         };
     });
-    
+
     const feriadoDescontarToggle = $('#feriado-descontar-toggle');
-    const feriadoHorasDescontoContainer = $('#feriado-horas-desconto-container');
     $$('.toggle-btn', feriadoDescontarToggle).forEach(button => {
         button.onclick = () => {
-            $$('.toggle-btn', feriadoDescontarToggle).forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            const show = button.dataset.value === 'sim';
-            feriadoHorasDescontoContainer.style.display = show ? 'flex' : 'none';
+            setDescontarHorasToggleState(button.dataset.value);
         };
     });
 
@@ -151,12 +175,16 @@ function setupEscalas() {
             geradorState.otimizarFolgas = button.dataset.value === 'sim';
         };
     });
-    
+
     $("#btnSalvarEscala").onclick = () => salvarEscalaAtual();
     $("#btnExcluirEscala").onclick = () => resetGeradorEscala();
-    
+
     renderEscCargoSelect();
     updateHolidaySectionState();
+    
+    // Garante o estado inicial dos toggles de forma direta
+    $('#feriado-trabalha-toggle .toggle-btn[data-value="sim"]').click();
+    setDescontarHorasToggleState('nao');
 }
 
 document.addEventListener("DOMContentLoaded", setupEscalas);

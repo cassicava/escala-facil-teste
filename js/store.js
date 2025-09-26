@@ -105,11 +105,11 @@ const store = {
         },
         DELETE_CARGO(state, cargoId) {
             state.cargos = state.cargos.filter(c => c.id !== cargoId);
-            // Lógica cascata: remove o cargo dos funcionários
+            // Lógica cascata: remove o cargo dos funcionários (define como nulo)
             state.funcionarios.forEach(f => { if (f.cargoId === cargoId) f.cargoId = null; });
             // Lógica cascata: remove as escalas salvas associadas ao cargo
             state.escalas = state.escalas.filter(e => e.cargoId !== cargoId);
-            
+
             saveJSON(KEYS.cargos, state.cargos);
             saveJSON(KEYS.funcs, state.funcionarios);
             saveJSON(KEYS.escalas, state.escalas);
@@ -125,10 +125,37 @@ const store = {
             saveJSON(KEYS.funcs, state.funcionarios);
         },
         DELETE_FUNCIONARIO(state, funcId) {
+            // Lógica de exclusão em cascata para escalas salvas
+            // Percorre todas as escalas e remove o funcionário dos slots, marcando-os como vagos.
+            state.escalas.forEach(escala => {
+                let escalaModificada = false;
+                // Remove o funcionário dos slots
+                escala.slots.forEach(slot => {
+                    if (slot.assigned === funcId) {
+                        slot.assigned = null;
+                        escalaModificada = true;
+                    }
+                });
+                // Remove o funcionário da lista de exceções da escala
+                if (escala.excecoes && escala.excecoes[funcId]) {
+                    delete escala.excecoes[funcId];
+                    escalaModificada = true;
+                }
+                // Remove o funcionário do histórico de horas da escala
+                if (escala.historico && escala.historico[funcId]) {
+                    delete escala.historico[funcId];
+                    escalaModificada = true;
+                }
+            });
+
+            // Salva as escalas modificadas para garantir a integridade
+            saveJSON(KEYS.escalas, state.escalas);
+
+            // Continua com a exclusão do funcionário
             state.funcionarios = state.funcionarios.filter(f => f.id !== funcId);
             saveJSON(KEYS.funcs, state.funcionarios);
         },
-        
+
         SAVE_ESCALA(state, escala) {
             const index = state.escalas.findIndex(e => e.id === escala.id);
             if (index > -1) {
@@ -142,13 +169,13 @@ const store = {
             state.escalas = state.escalas.filter(e => e.id !== escalaId);
             saveJSON(KEYS.escalas, state.escalas);
         },
-        
+
         SAVE_CONFIG(state, config) {
             state.config = { ...state.config, ...config };
             saveJSON(KEYS.config, state.config);
         }
     },
-    
+
     // 6. OBSERVER PATTERN: Mecanismo para 'ouvir' as mudanças no estado.
     /**
      * Adiciona uma função (callback) que será executada sempre que o estado for alterado.
