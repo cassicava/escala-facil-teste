@@ -1,0 +1,39 @@
+/**************************************
+ * 🏠 Estilos Específicos da Tela de Início
+ **************************************/
+
+/*
+ * O container principal (.container) já possui um padding base.
+ * As regras abaixo adicionam um padding extra APENAS à página inicial
+ * para alcançar o efeito de triplicar o espaçamento nas laterais e no topo,
+ * centralizando melhor os cards.
+ *
+ * ATUALIZAÇÃO 2: Mantendo o padding do topo e dobrando o padding das laterais.
+ */
+
+#page-home {
+    /* Padding do topo mantido, laterais dobradas para 192px. */
+    padding-top: 96px;
+    padding-left: 192px;
+    padding-right: 192px;
+}
+
+/* Ajustes para telas de tablet */
+@media (max-width: 992px) {
+    #page-home {
+        /* Padding do topo mantido, laterais dobradas para 128px. */
+        padding-top: 64px;
+        padding-left: 128px;
+        padding-right: 128px;
+    }
+}
+
+/* Ajustes para telas de celular */
+@media (max-width: 768px) {
+    #page-home {
+        /* Padding do topo mantido, laterais dobradas para 64px. */
+        padding-top: 32px;
+        padding-left: 64px;
+        padding-right: 64px;
+    }
+}

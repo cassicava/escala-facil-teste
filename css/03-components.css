@@ -401,9 +401,10 @@ button.danger:hover {
 }
 
 .tab-btn .tab-icon {
-    font-size: 1.2rem;
-    min-width: 38px;
-    height: 38px;
+    /* ALTERAÇÃO: Tamanho do ícone e do container aumentados */
+    font-size: 1.6rem;
+    min-width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -413,10 +414,11 @@ button.danger:hover {
 }
 
 .tab-btn .tab-text {
+    /* ALTERAÇÃO: Tamanho da fonte do texto aumentado */
     white-space: nowrap;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
-    font-size: 0.8rem;
+    font-size: 1rem;
 }
 
 .tab-btn:hover .tab-icon {
@@ -1049,4 +1051,30 @@ html[data-theme="dark"] .tab-btn:hover {
     100% {
         transform: rotate(360deg);
     }
+}
+
+/* --- SUGESTÃO: Efeito de Hover nas Tabelas --- */
+.table tbody tr {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.table tbody tr:hover {
+  /* Eleva um pouco a linha da tabela */
+  transform: translateY(-3px);
+  /* Adiciona uma sombra sutil para dar profundidade */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
+  /* O cursor ajuda a indicar que a linha pode ser interativa */
+  cursor: pointer;
+}
+
+/* --- SUGESTÃO: Animação de Hover nos Ícones da Sidebar --- */
+.tab-btn .tab-icon {
+  /* A transição já existente é ótima, apenas garantimos a do transform */
+  transition: all 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+/* Aplica o efeito apenas nos ícones que NÃO estão ativos */
+.tab-btn:not(.active):hover .tab-icon {
+  /* Gira levemente e aumenta de tamanho */
+  transform: scale(1.15) rotate(-8deg);
 }

@@ -1,0 +1,53 @@
+/**************************************
+ * ✨ Efeitos Especiais de Brilho e Cores
+ **************************************/
+
+/* --- Animação do Brilho Sutil (Glow) --- */
+@keyframes animated-glow {
+  0% {
+    box-shadow: 0 0 10px 0 rgba(0, 191, 255, 0.7); /* Azul Ciano transparente */
+  }
+  33% {
+    box-shadow: 0 0 10px 0 rgba(255, 0, 255, 0.7); /* Magenta transparente */
+  }
+  66% {
+    box-shadow: 0 0 10px 0 rgba(255, 0, 0, 0.7);   /* Vermelho transparente */
+  }
+  100% {
+    box-shadow: 0 0 10px 0 rgba(0, 191, 255, 0.7); /* Volta ao Azul */
+  }
+}
+
+/*
+ * ATUALIZAÇÃO CORRETA: Aplica a animação de brilho sutil aos cards
+ * de passo 1, 2 e 3 DENTRO da tela de Gerar Escala.
+*/
+#page-gerar-escala .wizard-step.card-animated-border {
+  animation: animated-glow 6s linear infinite;
+}
+
+
+/* --- Animação de Gradiente (Estilo Logo) --- */
+@keyframes animated-gradient-text {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 150% 50%; 
+  }
+}
+
+/* Aplica o fundo animado ao ícone "Gerar Escala" quando ele estiver ativo. */
+.tab-btn[data-page="gerar-escala"].active .tab-icon {
+  background: linear-gradient(
+      to right, 
+      #00BFFF, 
+      #FF00FF, 
+      #FF0000,
+      #FF00FF,
+      #00BFFF
+  );
+  background-size: 300% 100%;
+  animation: animated-gradient-text 6s linear infinite;
+  color: #fff;
+}
