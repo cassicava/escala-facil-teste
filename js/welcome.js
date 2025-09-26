@@ -9,6 +9,8 @@ const themeToggle = $("#welcomeThemeToggle");
 const themeButtons = $$(".toggle-btn", themeToggle);
 const termsCheckbox = $("#welcome-terms-checkbox");
 const termsLink = $("#welcome-terms-link");
+// NOVO: Cache do link da política de privacidade
+const privacyLink = $("#welcome-privacy-link");
 const personalizacaoNextBtn = $("#welcome-personalizacao-next");
 const finishBtn = $("#welcome-finish-btn");
 
@@ -16,7 +18,7 @@ const finishBtn = $("#welcome-finish-btn");
 let onboardingState = {
     currentStep: 1,
     nome: '',
-    theme: 'light', // ALTERAÇÃO: Tema claro como padrão
+    theme: 'light',
 };
 
 // --- Funções de Validação e Controle ---
@@ -31,7 +33,6 @@ function saveOnboardingProgress() {
 }
 
 function loadOnboardingProgress() {
-    // Carrega o progresso, mas mantém 'light' como fallback se nenhum tema for salvo
     const savedState = loadJSON('ge_onboarding_progress', onboardingState);
     if (savedState) {
         onboardingState = savedState;
@@ -107,7 +108,6 @@ function initWelcomeScreen() {
     loadOnboardingProgress();
     welcomeOverlay.classList.add('visible');
     
-    // Garante que o estado visual corresponda ao estado dos dados (que agora tem 'light' como padrão)
     themeButtons.forEach(btn => btn.classList.remove('active'));
     if(onboardingState.theme) {
         $(`.toggle-btn[data-value="${onboardingState.theme}"]`, themeToggle)?.classList.add('active');
@@ -128,6 +128,13 @@ function initWelcomeScreen() {
     termsLink.onclick = (e) => {
         e.preventDefault();
         exibirTermosDeUso();
+    };
+
+    // NOVO: Evento para o link da política de privacidade
+    privacyLink.onclick = (e) => {
+        e.preventDefault();
+        // Chama a função que criamos no arquivo configuracoes.js
+        exibirPoliticaDePrivacidade();
     };
 
     themeButtons.forEach(btn => {

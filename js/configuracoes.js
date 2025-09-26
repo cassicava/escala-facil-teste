@@ -61,6 +61,39 @@ function exibirTermosDeUso() {
     });
 }
 
+// NOVA FUNÇÃO COM O TEXTO DA POLÍTICA DE PRIVACIDADE
+function exibirPoliticaDePrivacidade() {
+    const politicaHTML = `
+        <div style="font-size: 0.9rem; line-height: 1.6;">
+            <p><strong>Última atualização:</strong> 26 de setembro de 2025</p>
+
+            <h4>1. O Princípio Fundamental: Seus Dados São Apenas Seus</h4>
+            <p>O Escala Fácil foi projetado com a privacidade em sua essência. Nós <strong>não coletamos, não armazenamos, não transmitimos e não temos acesso a absolutamente nenhuma informação pessoal ou de negócio</strong> que você insere no software.</p>
+            <p>Isso inclui, mas não se limita a: Nomes de funcionários, cargos, detalhes de turnos, escalas de trabalho geradas, feriados, férias, ou qualquer outra informação inserida.</p>
+
+            <h4>2. Como Suas Informações São Armazenadas</h4>
+            <p>Todos os dados que você cadastra no Escala Fácil são salvos diretamente no armazenamento local (<code>localStorage</code>) do seu navegador de internet, no seu próprio computador ou dispositivo. Isso significa que seus dados nunca saem do seu controle.</p>
+
+            <h4>3. Segurança dos Dados</h4>
+            <p>Como seus dados são armazenados localmente, a segurança deles está diretamente ligada à segurança do dispositivo que você utiliza. Você é o único responsável por garantir que seu computador e navegador estejam seguros.</p>
+
+            <h4>4. Cookies e Serviços de Terceiros</h4>
+            <p>O software Escala Fácil <strong>não utiliza cookies de rastreamento</strong>, pixels, ou qualquer serviço de análise de terceiros (como Google Analytics) para monitorar seu uso.</p>
+
+            <h4>5. Alterações a Esta Política de Privacidade</h4>
+            <p>Podemos atualizar nossa Política de Privacidade periodicamente. Recomendamos que você revise esta página de tempos em tempos para quaisquer alterações.</p>
+
+            <h4>6. Contato</h4>
+            <p>Se você tiver alguma dúvida sobre esta Política de Privacidade, entre em contato conosco através do e-mail: <strong>escalafacil.contato@gmail.com</strong></p>
+        </div>
+    `;
+
+    showInfoModal({
+        title: "Política de Privacidade do Escala Fácil",
+        contentHTML: politicaHTML
+    });
+}
+
 
 function initConfiguracoesPage() {
     // Eventos dos botões principais
@@ -68,6 +101,12 @@ function initConfiguracoesPage() {
     $("#linkTermosDeUso").onclick = (e) => {
         e.preventDefault();
         exibirTermosDeUso();
+    };
+
+    // NOVO EVENTO PARA O LINK DA POLÍTICA DE PRIVACIDADE
+    $("#linkPoliticaPrivacidade").onclick = (e) => {
+        e.preventDefault();
+        exibirPoliticaDePrivacidade();
     };
 
     // Eventos do seletor de tema
